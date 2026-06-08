@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
+<title>端午文化探险</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#f5f0e8;overflow:hidden;width:100vw;height:100vh;position:relative;color:#2c2416}
+
+/* === 水墨背景 === */
+.ink-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:hidden}
+.ink-bg::before{content:'';position:absolute;inset:-10%;width:120%;height:120%;
+  background:radial-gradient(ellipse at 20% 30%,rgba(139,69,19,0.06) 0%,transparent 50%),
+             radial-gradient(ellipse at 80% 70%,rgba(180,50,30,0.05) 0%,transparent 45%);
+  animation:bgDrift 20s ease-in-out infinite alternate}
+@keyframes bgDrift{to{transform:translate(-3%,2%) rotate(1deg)}}
+
+.ink-brush{position:fixed;pointer-events:none;z-index:0;opacity:0.04;font-size:120px;color:#8b0000}
+
+/* === 页面容器 === */
+.page{display:none;position:absolute;inset:0;z-index:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+.page.active{display:flex}
+
+/* === 标题页 === */
+#title-page h1{font-size:clamp(28px,7vw,48px);color:#8b0000;font-weight:900;letter-spacing:0.15em;margin-bottom:12px;
+  text-shadow:2px 2px 0 #e8d4b8,4px 4px 0 rgba(139,0,0,0.12);
+  background:linear-gradient(135deg,#8b0000,#c41e3a,#a52a2a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#title-page .subtitle{font-size:clamp(13px,3.5vw,17px);color:#6b5344;margin-bottom:40px;letter-spacing:0.3em}
+.start-btn{padding:14px 44px;font-size:18px;border:2px solid #a52a2a;border-radius:30px;
+  background:linear-gradient(135deg,#c41e3a,#8b0000);color:#fff;cursor:pointer;font-weight:600;
+  letter-spacing:0.15em;transition:.3s;animation:pulseGlow 2s ease-in-out infinite}
+.start-btn:active{transform:scale(1.06);box-shadow:0 0 25px rgba(196,30,58,0.35)}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 15px rgba(196,30,58,0.2)}50%{box-shadow:0 0 30px rgba(196,30,58,0.4)}}
+
+/* === 游戏主体卡片 === */
+.game-card{width:min(420px,92vw);background:rgba(255,250,240,0.92);border-radius:16px;
+  border:1px solid rgba(165,42,42,0.2);padding:20px 16px;backdrop-filter:blur(8px);position:relative;overflow:hidden}
+.stage-title{font-size:18px;color:#8b0000;font-weight:700;margin-bottom:4px;letter-spacing:0.1em}
+.stage-desc{font-size:13px;color:#8b7355;margin-bottom:16px;line-height:1.6}
+.score-bar{display:flex;justify-content:space-between;font-size:13px;color:#8b0000;font-weight:600;margin-bottom:8px}
+.progress-wrap{width:100%;height:6px;background:#e8ddd0;border-radius:3px;margin-bottom:16px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#c41e3a,#8b0000);transition:width .4s ease}
+
+/* === 第一关：击鼓 === */
+.drum-area{display:flex;flex-direction:column;align-items:center;gap:12px}
+.drum-visual{position:relative;width:200px;height:180px;margin:0 auto}
+.drum-skin-top{width:150px;height:26px;background:radial-gradient(circle at center,#f5e6d3 0%,#d4c4a8 100%);
+  position:absolute;top:32px;left:25px;border-radius:50%;border:2px solid #a08060;z-index:2}
+.drum-body{width:160px;height:105px;background:linear-gradient(180deg,#b22222 0%,#8b0000 50%,#5c0000 100%);
+  border-radius:55px/22px 22px 38px 38px;position:absolute;top:44px;left:20px;cursor:pointer;
+  transition:transform .08s;border:3px solid #6b0000;box-shadow:0 8px 25px rgba(139,0,0,0.3);z-index:3}
+.drum-body.hit{transform:scale(0.94)}
+.drum-skin-bot{width:146px;height:22px;background:radial-gradient(circle at center,#f0dcc5 0%,#cab89a 100%);
+  position:absolute;top:138px;left:27px;border-radius:50%;border:2px solid #a08060;z-index:2}
+.drum-label{position:absolute;top:65px;left:50%;transform:translateX(-50%);font-size:34px;font-weight:900;
+  color:rgba(255,215,0,0.65);pointer-events:none;text-shadow:0 2px 4px rgba(0,0,0,0.2);z-index:4}
+.drum-hint{font-size:14px;color:#c41e3a;font-weight:600;animation:hintPulse 1.2s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{opacity:.7}50%{opacity:1}}
+
+.beat-track{width:100%;display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:4px;min-height:32px}
+.beat-dot{width:26px;height:26px;border-radius:50%;border:2px solid transparent;transition:all .12s;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent}
+.beat-dot.pending{background:rgba(139,0,0,0.1);border-color:rgba(139,0,0,0.25)}
+.beat-dot.active{background:#c41e3a;border-color:#8b0000;animation:beatPop .25s ease;box-shadow:0 0 12px rgba(196,30,58,0.5);color:#fff}
+.beat-dot.hit-ok{background:#2e7d32;border-color:#1b5e20;color:#fff;transform:scale(1.1)}
+.beat-dot.miss{background:#757575;border-color:#424242;opacity:.5}
+@keyframes beatPop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+.combo-text{font-size:14px;font-weight:700;color:#c41e3a;height:20px;margin-top:4px}
+
+/* === 第二关：问答 === */
+.quiz-area{}
+.quiz-num{text-align:right;font-size:12px;color:#999;margin-bottom:8px}
+.quiz-q{font-size:15px;color:#2c2416;font-weight:600;line-height:1.7;margin-bottom:14px;text-align:left;padding:0 4px}
+.quiz-opts{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{padding:11px 14px;border-radius:10px;border:1.5px solid #d4c4a8;background:#fffef8;cursor:pointer;
+  font-size:14px;color:#3d3018;text-align:left;transition:all .2s;line-height:1.5}
+.quiz-opt:active{background:#fef5f0}
+.quiz-opt.correct{border-color:#2e7d32;background:#e8f5e9;color:#1b5e20}
+.quiz-opt.wrong{border-color:#c62828;background:#ffebee;color:#b71c1c}
+.quiz-opt.dimmed{pointer-events:none;opacity:.55}
+.quiz-fb{min-height:28px;font-size:13px;margin-top:12px;font-weight:500;padding:8px 12px;border-radius:8px;line-height:1.6;text-align:left}
+.fb-correct{color:#2e7d32;background:#e8f5e9}
+.fb-wrong{color:#c62828;background:#ffebee}
+.fb-info{color:#1565c0;background:#e3f2fd}
+
+/* === 第三关：投粽 === */
+.river-wrap{width:100%;height:320px;position:relative;border-radius:12px;overflow:hidden;
+  background:linear-gradient(180deg,#87ceeb 0%,#5ba3c9 18%,#3a7ca5 38%,#1e5670 65%,#0d3a52 100%);border:1px solid rgba(74,105,130,0.3)}
+.river-surface{position:absolute;top:0;left:0;width:100%;height:22%;
+  background:linear-gradient(180deg,rgba(135,206,235,0.5),rgba(91,163,201,0.3))}
+.sky-hint{position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,0.55);z-index:10;pointer-events:none;letter-spacing:0.15em}
+.wave{position:absolute;height:3px;background:rgba(255,255,255,0.12);border-radius:2px;left:-10%;width:120%}
+@keyframes waveM{from{transform:translateX(0)}to{transform:translateX(-20%)}}
+.score-badge{position:absolute;top:8px;left:10px;background:rgba(255,250,240,0.92);padding:4px 12px;
+  border-radius:20px;font-size:13px;font-weight:600;color:#8b0000;z-index:20;border:1px solid rgba(139,0,0,0.15)}
+.timer-badge{position:absolute;top:8px;right:10px;background:rgba(255,250,240,0.92);padding:4px 12px;
+  border-radius:20px;font-size:13px;font-weight:600;color:#c41e3a;z-index:20;border:1px solid rgba(196,30,58,0.15)}
+/* 投掷区——移到顶部，模拟岸边/船上投掷 */
+.throw-zone{position:absolute;top:4px;left:0;width:100%;display:flex;justify-content:center;gap:14px;z-index:18;padding:6px 10px 0;align-items:flex-start}
+/* 粽子按钮——clip-path直接作用在按钮本身，整体就是锥形粽子 */
+.zongzi-btn{width:44px;height:54px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;background:none;
+  transition:transform .1s;user-select:none;touch-action:manipulation;
+  position:relative;
+  /* 真正的粽子锥形：尖顶+宽底+微棱角 */
+  clip-path:polygon(50% 2%, 88% 35%, 82% 78%, 50% 98%, 18% 78%, 12% 35%)}
+.zongzi-btn::before{
+  content:'';position:absolute;inset:-2px;
+  clip-path:polygon(50% 2%, 88% 35%, 82% 78%, 50% 98%, 18% 78%, 12% 35%);
+  box-shadow:0 4px 12px rgba(0,0,0,0.25), inset 0 1px 3px rgba(255,255,255,0.15);
+}
+/* 绳子绑扎纹路 */
+.zongzi-btn::after{
+  content:'';position:absolute;z-index:2;left:6%;width:88%;height:2.5px;
+  top:36%;border-radius:1.5px;
+}
+/* 碱水粽·翠绿 */
+.zongzi-btn[data-z="🟩"]::before{background:linear-gradient(145deg,#5db861 0%,#38913c 40%,#217a28 70%,#155d1b 100%)}
+.zongzi-btn[data-z="🟩"]::after{background:linear-gradient(90deg,rgba(200,180,100,0.7),rgba(160,140,60,0.5),rgba(200,180,100,0.7));
+  box-shadow:0 11px 0 rgba(170,150,55,0.45),0 22px 0 rgba(160,140,50,0.35)}
+/* 肉粽·深褐 */
+.zongzi-btn[data-z="🟫"]::before{background:linear-gradient(145deg,#a07d20 0%,#7a5c12 40%,#5c4509 70%,#3d2e06 100%)}
+.zongzi-btn[data-z="🟫"]::after{background:linear-gradient(90deg,rgba(220,190,120,0.65),rgba(175,145,75,0.48),rgba(220,190,120,0.65));
+  box-shadow:0 11px 0 rgba(165,135,55,0.42),0 22px 0 rgba(155,130,50,0.32)}
+/* 甜粽·蜜橙 */
+.zongzi-btn[data-z="🟧"]::before{background:linear-gradient(145deg,#e08842 0%,#c46424 40%,#a34a14 70%,#80380e 100%)}
+.zongzi-btn[data-z="🟧"]::after{background:linear-gradient(90deg,rgba(230,195,130,0.62),rgba(185,150,85,0.44),rgba(230,195,130,0.62));
+  box-shadow:0 11px 0 rgba(175,145,65,0.4),0 22px 0 rgba(165,138,58,0.3)}
+/* 隐藏原来的方块emoji文字，用CSS形状替代 */
+.zongzi-btn .z-label{font-size:0}
+.zongzi-btn:active{transform:scale(1.2) translateY(3px)}
+
+/* 飞行粽子——同样锥形，clip-path在元素本身 */
+.flying{position:absolute;z-index:25;pointer-events:none;
+  width:36px;height:44px;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,0.35)) drop-shadow(0 0 8px rgba(212,175,55,0.4));
+  animation:flyDown .55s cubic-bezier(0.33,0,0.67,0.33) forwards;
+  clip-path:polygon(50% 2%, 88% 35%, 82% 78%, 50% 98%, 18% 78%, 12% 35%)}
+.flying::before{
+  content:'';position:absolute;inset:-2px;
+  clip-path:polygon(50% 2%, 88% 35%, 82% 78%, 50% 98%, 18% 78%, 12% 35%);
+  box-shadow:0 3px 8px rgba(0,0,0,0.3);
+}
+.flying::after{
+  content:'';position:absolute;z-index:2;left:5%;width:90%;height:2px;top:36%;border-radius:1px;
+}
+.flying.fly-green::before{background:linear-gradient(145deg,#5db861 0%,#38913c 40%,#217a28 100%)}
+.flying.fly-green::after{background:rgba(190,168,90,0.65);box-shadow:0 10px 0 rgba(165,142,55,0.43),0 20px 0 rgba(155,132,50,0.33)}
+.flying.fly-brown::before{background:linear-gradient(145deg,#a07d20 0%,#7a5c12 40%,#5c4509 100%)}
+.flying.fly-brown::after{background:rgba(210,182,110,0.6);box-shadow:0 10px 0 rgba(158,132,52,0.4),0 20px 0 rgba(148,125,48,0.3)}
+.flying.fly-orange::before{background:linear-gradient(145deg,#e08842 0%,#c46424 40%,#a34a14 100%)}
+.flying.fly-orange::after{background:rgba(218,188,118,0.58);box-shadow:0 10px 0 rgba(168,142,62,0.38),0 20px 0 rgba(158,134,56,0.28)}
+.throw-tip{position:absolute;top:54px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);z-index:20;white-space:nowrap;pointer-events:none;font-weight:500}
+/* 拖尾粒子 */
+.trail-dot{position:absolute;width:8px;height:8px;border-radius:50%;z-index:24;pointer-events:none;
+  background:radial-gradient(circle,rgba(212,175,55,0.7),transparent);animation:trailFade .35s ease-out forwards}
+@keyframes trailFade{0%{opacity:0.8;transform:scale(1)}100%{opacity:0;transform:scale(0)}}
+@keyframes flyDown{0%{opacity:1;transform:translateY(0) scale(1.1) rotate(-5deg)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(260px) scale(0.3) rotate(15deg)}}
+.float-score{position:absolute;z-index:15;pointer-events:none;color:#d4af37;font-weight:700;font-size:15px;
+  animation:floatUp .7s ease-out forwards;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
+.fish-in-river{position:absolute;font-size:26px;z-index:4;cursor:pointer;transition:opacity .3s;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.2))}
+@keyframes ringPop{0%{opacity:1;transform:scale(0.5)}100%{opacity:0;transform:scale(2)}}
+
+/* === 通关页 === */
+.end-card{width:min(380px,88vw)}
+.end-banner{font-size:clamp(24px,6vw,38px);color:#8b0000;font-weight:900;letter-spacing:0.12em;margin-bottom:8px;
+  background:linear-gradient(135deg,#8b0000,#c41e3a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.total-score{font-size:clamp(36px,9vw,56px);color:#c41e3a;font-weight:900;margin-bottom:2px}
+.score-unit{font-size:13px;color:#8b7355;letter-spacing:0.2em;margin-bottom:22px}
+.quyuan-talk{background:rgba(245,228,211,0.6);border-left:3px solid #8b0000;padding:13px 16px;
+  border-radius:0 10px 10px 0;font-size:14px;color:#3d3018;line-height:1.8;text-align:left;margin-bottom:20px}
+.frag-list{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:20px}
+.frag{display:inline-block;padding:5px 13px;border-radius:16px;font-size:12px;font-weight:600;
+  background:rgba(196,30,58,0.08);color:#8b0000;border:1px solid rgba(196,30,58,0.18)}
+.name-row{margin-bottom:14px}
+.name-label{font-size:13px;color:#8b7355;margin-bottom:6px}
+.name-input{padding:9px 14px;border:1.5px solid #d4c4a8;border-radius:10px;font-size:15px;width:180px;
+  text-align:center;outline:none;transition:border .2s;background:#fffef8;color:#2c2416}
+.name-input:focus{border-color:#c41e3a}
+.name-input::placeholder{color:#bbb}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px}
+.btn-submit{padding:11px 30px;font-size:14px;border-radius:22px;border:none;cursor:pointer;font-weight:600;
+  letter-spacing:0.08em;transition:.3s;background:linear-gradient(135deg,#c41e3a,#8b0000);color:#fff}
+.btn-submit:active{transform:scale(1.04)}
+.btn-leader{padding:10px 24px;font-size:13px;border-radius:20px;border:1.5px solid #8b0000;color:#8b0000;
+  background:transparent;cursor:pointer;font-weight:600;letter-spacing:0.06em;transition:.3s}
+.btn-leader:active{background:rgba(139,0,0,0.06)}
+.btn-restart{padding:9px 26px;font-size:13px;border-radius:20px;border:none;cursor:pointer;font-weight:600;
+  background:linear-gradient(135deg,#5dcaa5,#1d9e75);color:#fff;letter-spacing:0.06em;transition:.3s}
+.btn-restart:active{transform:scale(1.04)}
+
+/* 排行榜 */
+.lb-section{margin-top:18px;width:100%;display:none}
+.lb-title{font-size:15px;color:#8b0000;font-weight:700;margin-bottom:10px;letter-spacing:0.08em}
+.lb-table{width:100%;border-collapse:collapse;font-size:13px}
+.lb-table th{background:rgba(196,30,58,0.08);color:#8b0000;padding:7px 5px;font-weight:600;border-bottom:1.5px solid rgba(196,30,58,0.18)}
+.lb-table td{padding:6px 5px;border-bottom:1px solid #eee;color:#3d3018;text-align:center}
+.lb-table tr.hl td{background:rgba(29,158,117,0.08);font-weight:600;color:#0F6E56}
+.lb-empty{color:#999;padding:16px;font-size:13px}
+
+/* 粒子 */
+.particle{position:fixed;pointer-events:none;z-index:100;border-radius:50%;animation:ptclFade .9s ease-out forwards}
+@keyframes ptclFade{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(0) translateY(-50px)}}
+
+/* 过渡 */
+.fade-out{animation:fadeOut .35s forwards}@keyframes fadeOut{to{opacity:0;transform:scale(0.96)}}
+.slide-up{animation:slideUp .48s ease forwards}@keyframes slideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+/* 响应式 */
+@media(max-width:400px){
+  .game-card{padding:16px 11px}
+  .drum-visual{width:180px;height:155px}
+  .river-wrap{height:290px}
+  .quiz-opt{padding:10px 11px;font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<div class="ink-bg"></div>
+<!-- 水墨装饰 -->
+<div class="ink-brush" style="top:5%;left:-20px;transform:rotate(-15deg)">龍</div>
+<div class="ink-brush" style="bottom:8%;right:-30px;transform:rotate(10deg);font-size:90px">粽</div>
+
+<!-- ========== 标题页 ========== -->
+<div id="title-page" class="page active">
+  <h1>端午文化探险</h1>
+  <p class="subtitle">穿越千年 · 寻找文化碎片</p>
+  <button class="start-btn" id="btn-start">开始探索</button>
+</div>
+
+<!-- ========== 第一关：击鼓传声 ========== -->
+<div id="drum-page" class="page">
+  <div class="game-card drum-area slide-up">
+    <div class="stage-title">第一关 · 击鼓传声</div>
+    <div class="stage-desc">跟随鼓点击打，节奏越准分数越高！<br>屈原的龙舟需要你的鼓声才能启航。</div>
+    <div class="score-bar"><span>得分：<b id="drum-score">0</b></span><span>连击：<b id="drum-combo">0</b></span></div>
+    <div class="progress-wrap"><div id="drum-prog" class="progress-fill" style="width:0%"></div></div>
+
+    <div class="drum-visual">
+      <div class="drum-skin-top"></div>
+      <div class="drum-body" id="drum-body"></div>
+      <div class="drum-skin-bot"></div>
+      <div class="drum-label">鼓</div>
+    </div>
+    <div class="drum-hint" id="drum-hint">👆 点击鼓面 / 按空格键</div>
+    <div class="beat-track" id="beat-track"></div>
+    <div class="combo-text" id="combo-text"></div>
+  </div>
+</div>
+
+<!-- ========== 第二关：端午问答 ========== -->
+<div id="quiz-page" class="page">
+  <div class="game-card quiz-area slide-up">
+    <div class="stage-title">第二关 · 端午问答</div>
+    <div class="stage-desc">屈原穿越时空带来了文化谜题<br>答对问题，解锁更多文化记忆！</div>
+    <div class="score-bar"><span>得分：<b id="quiz-score">0</b></span><span id="quiz-num">第 1 题 / 共 5 题</span></div>
+    <div class="progress-wrap"><div id="quiz-prog" class="progress-fill" style="width:0%"></div></div>
+
+    <div class="quiz-q" id="quiz-q">加载中...</div>
+    <div class="quiz-opts" id="quiz-opts"></div>
+    <div class="quiz-fb" id="quiz-fb"></div>
+  </div>
+</div>
+
+<!-- ========== 第三关：投粽入江 ========== -->
+<div id="zongzi-page" class="page">
+  <div class="game-card" style="padding:12px 10px 10px 10px">
+    <div class="stage-title">第三关 · 投粽入江</div>
+    <div class="stage-desc">投粽子驱散鱼群，保护屈原！<br>投中鱼群得分更高，限时30秒。</div>
+
+    <div class="river-wrap" id="river-wrap">
+      <div class="river-surface"></div>
+      <div class="sky-hint">↓ 江面 ↓</div>
+      <div class="wave" style="top:20%;animation:waveM 3s linear infinite"></div>
+      <div class="wave" style="top:28%;animation:waveM 4s linear infinite reverse;opacity:.6"></div>
+      <div class="wave" style="top:36%;animation:waveM 5s linear infinite;opacity:.4"></div>
+      <!-- 屈原在底部深处 -->
+      <div class="quyuan-in-river" id="quyuan-river" style="position:absolute;bottom:8%;left:50%;transform:translateX(-50%);z-index:3;font-size:48px;
+        filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4))">👤</div>
+      <div class="score-badge" id="zongzi-count">🟩 × 0</div>
+      <div class="timer-badge" id="timer-badge">30s</div>
+      <div class="throw-tip" id="throw-tip">点击粽子投入江中！</div>
+      <!-- 投掷区在顶部（岸边/船上） -->
+      <div class="throw-zone" id="throw-zone">
+        <div class="zongzi-btn" data-z="🟩" title="碱水粽"><span class="z-label">🟩</span></div>
+        <div class="zongzi-btn" data-z="🟫" title="肉粽"><span class="z-label">🟫</span></div>
+        <div class="zongzi-btn" data-z="🟧" title="甜粽"><span class="z-label">🟧</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;text-align:center">
+      <span style="font-size:13px;color:#8b0000;font-weight:600">本关得分：<b id="zongzi-score">0</b></span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 通关页 ========== -->
+<div id="end-page" class="page">
+  <div class="game-card end-card slide-up">
+    <div class="end-banner">文化传承完成</div>
+    <div class="total-score" id="total-score">0</div>
+    <div class="score-unit">总 分</div>
+
+    <div class="quyuan-talk" id="quyuan-talk"></div>
+    <div class="frag-list" id="frag-list"></div>
+
+    <div class="name-row">
+      <div class="name-label">输入你的名字，登上文化榜：</div>
+      <input class="name-input" id="player-name" placeholder="你的名字或昵称" maxlength="8">
+    </div>
+    <div class="btn-row">
+      <button class="btn-submit" id="btn-submit">提交成绩</button>
+      <button class="btn-restart" id="btn-restart">再玩一次</button>
+    </div>
+    <button class="btn-leader" id="btn-leader">查看排行榜</button>
+
+    <div class="lb-section" id="lb-section">
+      <div class="lb-title">—— 文化榜 ——</div>
+      <table class="lb-table"><thead><tr><th>排名</th><th>名字</th><th>总分</th></tr></thead><tbody id="lb-body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================================================================
+//  音频引擎
+// ===================================================================
+const Audio = (() => {
+  let ctx = null;
+  function get(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); return ctx; }
+
+  function drum(intensity=1){
+    const c=get(), t=c.currentTime;
+    const o=c.createOscillator(), g=c.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(150*intensity,t); o.frequency.exponentialRampToValueAtTime(38,t+0.16);
+    g.gain.setValueAtTime(0.55*intensity,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.3);
+    // 泛音
+    const o2=c.createOscillator(), g2=c.createGain();
+    o2.type='triangle'; o2.frequency.setValueAtTime(290*intensity,t); o2.frequency.exponentialRampToValueAtTime(115,t+0.08);
+    g2.gain.setValueAtTime(0.22*intensity,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+    o2.connect(g2).connect(c.destination); o2.start(t); o2.stop(t+0.12);
+  }
+
+  function correctNote(){
+    const c=get(), t=c.currentTime;
+    [523.25,659.25,783.99].forEach((f,i)=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.13,t+i*0.07); g.gain.exponentialRampToValueAtTime(0.001,t+i*0.07+0.22);
+      o.connect(g).connect(c.destination); o.start(t+i*0.07); o.stop(t+i*0.07+0.28);
+    });
+  }
+
+  function wrongNote(){
+    const c=get(), t=c.currentTime;
+    const o=c.createOscillator(), g=c.createGain();
+    o.type='square'; o.frequency.setValueAtTime(200,t); o.frequency.linearRampToValueAtTime(145,t+0.22);
+    g.gain.setValueAtTime(0.1,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.28);
+  }
+
+  function splash(){
+    const c=get(), t=c.currentTime;
+    for(let i=0;i<3;i++){
+      const o=c.createOscillator(), g=c.createGain();
+      o.type='sine'; o.frequency.value=320+i*180;
+      g.gain.setValueAtTime(0.06,t+i*0.03); g.gain.exponentialRampToValueAtTime(0.001,t+i*0.03+0.12);
+      o.connect(g).connect(c.destination); o.start(t+i*0.03); o.stop(t+i*0.03+0.18);
+    }
+  }
+
+  function fishCatch(){
+    const c=get(), t=c.currentTime;
+    const o=c.createOscillator(), g=c.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(880,t); o.frequency.exponentialRampToValueAtTime(440,t+0.12);
+    g.gain.setValueAtTime(0.1,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.2);
+  }
+
+  return { drum, correctNote, wrongNote, splash, fishCatch }
+})();
+
+// ===================================================================
+//  题库
+// ===================================================================
+const QUIZ = [
+  { q:"端午节最初是为了纪念哪位历史人物？", opt:["屈原","李白","杜甫","苏轼"], ans:0,
+    info:"端午节源于纪念战国时期楚国大夫屈原。公元前278年，秦军攻破楚国都城，屈原于五月五日投汨罗江自尽，后人以此日纪念他。" },
+  { q:"以下哪个不是端午节的传统习俗？", opt:["吃月饼","挂艾草","赛龙舟","佩香囊"], ans:0,
+    info:"中秋节才吃月饼！端午节的传统习俗包括：赛龙舟、吃粽子、挂艾草与菖蒲、佩香囊、系五彩绳等。" },
+  { q:"《离骚》是谁的作品？", opt:["孔子","屈原","孟子","庄子"], ans:1,
+    info:"《离骚》是屈原的代表作，是中国古代最长的抒情诗。'路漫漫其修远兮，吾将上下而求索'即出自此篇。" },
+  { q:"粽子主要有哪两大口味派别之争？", opt:["甜党 vs 咸党","辣党 vs 不辣党","冷党 vs 热党","硬党 vs 软党"], ans:0,
+    info:"北方人偏爱甜粽（红枣、豆沙馅），南方人钟情咸粽（鲜肉、蛋黄馅）。这可是每年端午节的热门话题哦！" },
+  { q:"屈原是哪个诸侯国的诗人？", opt:["秦国","齐国","楚国","燕国"], ans:2,
+    info:"屈原（约前340—前278），名平，字原，战国时期楚国贵族、政治家、诗人。他是中国浪漫主义文学的奠基人。" }
+];
+
+// ===================================================================
+//  文化碎片 & 屈原寄语
+// ===================================================================
+const FRAGS = ["龙舟竞渡","楚辞离骚","艾草驱邪","五色丝线","雄黄酒香","香囊祈福"];
+function quyuanMsg(score){
+  if(score>=100) return "完美！你是真正的文化传承者！\n屈原穿越两千年时光来到这里，\n就是为了遇见像你这样的年轻人。\n肉身随水而去，诗篇永存人间——这就是文化的力量！";
+  if(score>=80)  return "太棒了！你对端午文化了解颇深！\n屈原在汨罗江边看到你努力的样子，很是欣慰。\n记住：路漫漫其修远兮，吾将上下而求索。";
+  if(score>=60)  return "不错，你已收集了不少文化碎片！\n屈原相信，每一次了解都是文化的延续。\n下次你一定会做得更好。";
+  return "孩子，文化的种子已经种下。\n虽然这次得分不高，但你已经开始了解这段两千年的记忆了。\n屈原相信，下一次你会做得更好。";
+}
+
+// ===================================================================
+//  游戏主控
+// ===================================================================
+const Game = {
+  scores: {drum:0, quiz:0, zongzi:0},
+  total(){ return this.scores.drum + this.scores.quiz + this.scores.zongzi; },
+
+  init(){
+    Audio.drum(); // 预初始化 AudioContext
+    document.getElementById('btn-start').onclick = ()=>this.goTo('drum-page', ()=>Drum.init());
+    document.getElementById('btn-submit').onclick = ()=>this.submitScore();
+    document.getElementById('btn-restart').onclick = ()=>this.restart();
+    document.getElementById('btn-leader').onclick = ()=>this.showLB();
+
+    // 键盘
+    document.addEventListener('keydown', e=>{
+      if(e.code==='Space'||e.code==='Enter'){
+        if(document.getElementById('drum-page').classList.contains('active') && Drum.running) Drum.hit();
+      }
+    });
+
+    // 鼠标点击鼓面
+    const drumBody = document.getElementById('drum-body');
+    if(drumBody){
+      drumBody.onclick = (e)=>{ e.preventDefault(); if(Drum.running) Drum.hit(); };
+      drumBody.ontouchstart = (e)=>{ e.preventDefault(); if(Drum.running) Drum.hit(); };
+    }
+
+    // 粽子按钮
+    document.querySelectorAll('.zongzi-btn').forEach(btn=>{
+      btn.ontouchstart = btn.onmousedown = (e)=>{ e.preventDefault(); Zongzi.throwEmoji(btn.dataset.z); };
+    });
+  },
+
+  goTo(pageId, cb){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const page = document.getElementById(pageId);
+    page.classList.add('active');
+    const el = page.querySelector('.slide-up');
+    if(el){ el.style.animation='none'; el.offsetHeight; el.style.animation=''; }
+    if(cb) setTimeout(cb, 60);
+  },
+
+  restart(){
+    this.scores={drum:0,quiz:0,zongzi:0};
+    Drum.reset(); Quiz.reset(); Zongzi.reset();
+    document.getElementById('lb-section').style.display='none';
+    this.goTo('title-page');
+  },
+
+  // --- 排行榜 (localStorage + 可选 JSONBin) ---
+  LB_KEY: 'duanwu_lb',
+  async getLB(){
+    try{ return JSON.parse(localStorage.getItem(this.LB_KEY))||[]; }catch(e){ return []; }
+  },
+  async saveLB(name, score){
+    const records = await this.getLB();
+    records.push({name,score,date:new Date().toLocaleDateString('zh-CN')});
+    records.sort((a,b)=>b.score-a.score);
+    localStorage.setItem(this.LB_KEY, JSON.stringify(records.slice(0,20)));
+  },
+
+  async submitScore(){
+    const name = (document.getElementById('player-name').value.trim())||'匿名侠';
+    await this.saveLB(name, this.total());
+    this.showLB();
+    Audio.correctNote();
+  },
+
+  async showLB(){
+    const section = document.getElementById('lb-section');
+    section.style.display='block';
+    const records = await this.getLB();
+    const tbody = document.getElementById('lb-body');
+    const myScore = this.total();
+    if(!records.length){ tbody.innerHTML='<tr><td colspan="3" class="lb-empty">暂无记录，快来提交吧！</td></tr>'; return; }
+    tbody.innerHTML = records.map((r,i)=>
+      `<tr${r.score===myScore&&i<5?' class="hl"':''}>
+        <td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+        <td>${this.esc(r.name)}</td>
+        <td><b>${r.score}</b></td>
+      </tr>`
+    ).join('');
+  },
+
+  esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; },
+
+  // --- 结束画面 ---
+  showEnd(){
+    const total = this.total();
+    document.getElementById('total-score').textContent = total;
+    document.getElementById('quyuan-talk').textContent = quyuanMsg(total);
+    const n = Math.min(FRAGS.length, Math.max(3, Math.floor(total/18)));
+    document.getElementById('frag-list').innerHTML = FRAGS.slice(0,n).map(f=>`<span class="frag">${f}</span>`).join('');
+    this.goTo('end-page', ()=>this.spawnParticles());
+    Audio.correctNote();
+  },
+
+  spawnParticles(){
+    const cols = ['#c41e3a','#8b0000','#d4af37','#2e7d32','#1d9e75'];
+    for(let i=0;i<28;i++){
+      const el=document.createElement('div');
+      el.className='particle';
+      el.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*100}vh;width:${5+Math.random()*9}px;height:${5+Math.random()*9}px;background:${cols[Math.floor(Math.random()*cols.length)]}`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 1000);
+    }
+  }
+};
+
+// ===================================================================
+//  第一关：击鼓
+// ===================================================================
+const Drum = {
+  score: 0, combo: 0, maxCombo: 0,
+  pattern: [], idx: 0, running: false, timer: null,
+
+  reset(){ this.score=0; this.combo=0; this.maxCombo=0; this.idx=0; this.pattern=[]; this.running=false; },
+
+  init(){
+    this.score=0; this.combo=0; this.maxCombo=0; this.idx=0; this.running=true;
+    document.getElementById('drum-score').textContent='0';
+    document.getElementById('drum-combo').textContent='0';
+    this.genPattern();
+    this.renderBeats();
+    this.loop();
+  },
+
+  genPattern(){
+    this.pattern=[];
+    for(let i=0;i<24;i++){
+      const g=i%4;
+      if(g===0||g===2) this.pattern.push(1);
+      else if(g===1 && Math.random()>0.35) this.pattern.push(1);
+      else this.pattern.push(0);
+    }
+  },
+
+  renderBeats(){
+    const wrap=document.getElementById('beat-track');
+    wrap.innerHTML='';
+    this.pattern.forEach((p,i)=>{
+      const d=document.createElement('div');
+      d.className='beat-dot'+(p?' pending':'');
+      d.dataset.i=i;
+      wrap.appendChild(d);
+    });
+  },
+
+  loop(){
+    if(!this.running) return;
+    if(this.idx>=this.pattern.length){ setTimeout(()=>this.finish(), 500); return; }
+
+    const el=document.querySelector(`.beat-dot[data-i="${this.idx}"]`);
+    if(el && this.pattern[this.idx]) el.className='beat-dot active';
+
+    document.getElementById('drum-prog').style.width = ((this.idx+1)/this.pattern.length*100)+'%';
+
+    if(this.pattern[this.idx]){
+      const cur=this.idx;
+      this._pending=cur;
+      this._to=setTimeout(()=>{
+        if(this._pending===cur && document.querySelector(`.beat-dot[data-i="${cur}"]`)?.classList.contains('active')){
+          this.miss(cur);
+        }
+      }, 420);
+    }
+
+    this.idx++;
+    if(this.idx<this.pattern.length) this.timer=setTimeout(()=>this.loop(), 510);
+    else setTimeout(()=>this.finish(), 600);
+  },
+
+  hit(){
+    if(!this.running) return;
+    Audio.drum();
+    const body=document.getElementById('drum-body');
+    body.classList.add('hit'); setTimeout(()=>body.classList.remove('hit'), 80);
+
+    // 找到当前 active 拍
+    for(let i=0;i<this.pattern.length;i++){
+      const el=document.querySelector(`.beat-dot[data-i="${i}"]`);
+      if(el && el.classList.contains('active')){ this.onHit(i); return; }
+    }
+  },
+
+  onHit(i){
+    this._pending=-1; clearTimeout(this._to);
+    const el=document.querySelector(`.beat-dot[data-i="${i}"]`);
+    if(!el) return;
+    el.className='beat-dot hit-ok';
+    this.combo++;
+    if(this.combo>this.maxCombo) this.maxCombo=this.combo;
+    let pts=10;
+    if(this.combo>=8) pts=25; else if(this.combo>=5) pts=20; else if(this.combo>=3) pts=15;
+    this.score+=pts;
+    Game.scores.drum=this.score;
+    document.getElementById('drum-score').textContent=this.score;
+    document.getElementById('drum-combo').textContent=this.combo;
+    const ct=document.getElementById('combo-text');
+    if(this.combo>=3){ ct.textContent=this.combo+'连击!'; ct.style.transform='scale(1.12)'; setTimeout(()=>ct.style.transform='',140); }
+  },
+
+  miss(i){
+    this._pending=-1; clearTimeout(this._to);
+    const el=document.querySelector(`.beat-dot[data-i="${i}"]`);
+    if(el) el.className='beat-dot miss';
+    this.combo=0;
+    document.getElementById('drum-combo').textContent='0';
+    document.getElementById('combo-text').textContent='';
+  },
+
+  finish(){
+    this.running=false; clearTimeout(this.timer);
+    document.getElementById('combo-text').textContent=`最大连击: ${this.maxCombo}`;
+    setTimeout(()=>Game.goTo('quiz-page', ()=>Quiz.init()), 1100);
+  }
+};
+
+// ===================================================================
+//  第二关：问答
+// ===================================================================
+const Quiz = {
+  idx:0, score:0, locked:false,
+  reset(){ this.idx=0; this.score=0; this.locked=false; },
+
+  init(){ this.idx=0; this.score=0; this.locked=false; this.show(); },
+
+  show(){
+    if(this.idx>=QUIZ.length){ setTimeout(()=>Game.goTo('zongzi-page', ()=>Zongzi.init()), 600); return; }
+    this.locked=false;
+    const d=QUIZ[this.idx];
+    document.getElementById('quiz-num').textContent=`第 ${this.idx+1} 题 / 共 ${QUIZ.length} 题`;
+    document.getElementById('quiz-prog').style.width = (this.idx/QUIZ.length*100)+'%';
+    document.getElementById('quiz-q').textContent=d.q;
+    const opts=document.getElementById('quiz-opts');
+    opts.innerHTML='';
+    d.opt.forEach((o,i)=>{
+      const b=document.createElement('div');
+      b.className='quiz-opt';
+      b.innerHTML=`<span style="margin-right:6px;color:#c41e3a">${['A','B','C','D'][i]}</span>${Game.esc(o)}`;
+      b.onclick=()=>this.answer(i);
+      opts.appendChild(b);
+    });
+    const fb=document.getElementById('quiz-fb'); fb.className='quiz-fb'; fb.innerHTML='&nbsp;';
+    document.getElementById('quiz-score').textContent=this.score;
+    Game.scores.quiz=this.score;
+  },
+
+  answer(choice){
+    if(this.locked) return;
+    this.locked=true;
+    const d=QUIZ[this.idx];
+    const opts=document.querySelectorAll('.quiz-opt');
+    opts.forEach(o=>o.classList.add('dimmed'));
+    const fb=document.getElementById('quiz-fb');
+
+    if(choice===d.ans){
+      opts[choice].classList.add('correct');
+      fb.className='quiz-fb fb-correct';
+      fb.innerHTML='✓ 回答正确！'+d.info;
+      this.score+=20;
+      Audio.correctNote();
+    } else {
+      opts[choice].classList.add('wrong');
+      opts[d.ans].classList.add('correct');
+      fb.className='quiz-fb fb-wrong';
+      fb.innerHTML='✗ 正确答案是 '+['A','B','C','D'][d.ans]+'. '+d.info;
+      Audio.wrongNote();
+    }
+    this.locked=true;
+    document.getElementById('quiz-score').textContent=this.score;
+    Game.scores.quiz=this.score;
+    document.getElementById('quiz-prog').style.width=((this.idx+1)/QUIZ.length*100)+'%';
+    this.idx++;
+    setTimeout(()=>this.show(), 3300);
+  }
+};
+
+// ===================================================================
+//  第三关：投粽入江
+// ===================================================================
+const Zongzi = {
+  score:0, count:0, timeLeft:30, timer:null, fishes:[], running:false, rafId:null,
+  _wrapW:0, _wrapH:0,
+
+  reset(){ this.score=0; this.count=0; this.timeLeft=30; this.fishes=[]; this.running=false; },
+
+  init(){
+    this.score=0; this.count=0; this.timeLeft=30; this.fishes=[]; this.running=true;
+    document.getElementById('zongzi-score').textContent='0';
+    document.getElementById('zongzi-count').textContent='🟩 × 0';
+    document.getElementById('timer-badge').textContent='30s';
+    document.getElementById('timer-badge').style.color='#c41e3a';
+    document.getElementById('throw-tip').textContent='点击粽子投入江中！';
+    // 清除残留
+    document.querySelectorAll('.flying,.float-score,.fish-in-river,.hit-ring,.trail-dot').forEach(e=>e.remove());
+    // 缓存river-wrap尺寸（等布局稳定后再取）
+    const wrap=document.getElementById('river-wrap');
+    // 延迟一帧获取准确尺寸
+    requestAnimationFrame(()=>{
+      const wr=wrap.getBoundingClientRect();
+      this._wrapW=wr.width; this._wrapH=wr.height;
+    });
+    this._wrapW=wrap.offsetWidth||350; this._wrapH=wrap.offsetHeight||320;
+    this.startTimer();
+    this.spawnLoop();
+    this.gameLoop();
+  },
+
+  throwEmoji(emoji){
+    if(!this.running||this.timeLeft<=0) return;
+
+    const wrap=document.getElementById('river-wrap');
+    const zone=document.getElementById('throw-zone');
+    const zr=zone.getBoundingClientRect();
+    const wr=wrap.getBoundingClientRect();
+
+    // 发射起点（顶部三个按钮各自的中心位置）
+    let fx=zr.left-wr.left+23; // 默认中间按钮中心
+    if(emoji==='🟩') fx = zr.left - wr.left + 23;
+    else if(emoji==='🟫') fx = zr.left - wr.left + zr.width/2;
+    else if(emoji==='🟧') fx = zr.left - wr.left + zr.width - 23;
+    const fy=zr.top-wr.top+50; // 按钮底部附近
+
+    // ===== 创建飞行动画元素（CSS粽子形状）=====
+    const el=document.createElement('div');
+    el.className='flying';
+    // 根据类型添加颜色类
+    if(emoji==='🟩') el.classList.add('fly-green');
+    else if(emoji==='🟫') el.classList.add('fly-brown');
+    else el.classList.add('fly-orange');
+    el.style.left=(fx-19)+'px'; el.style.top=fy+'px';
+    wrap.appendChild(el);
+
+    // 添加拖尾粒子效果
+    this.addTrail(wrap, fx, fy);
+
+    this.count++;
+    document.getElementById('zongzi-count').textContent='🟩 × '+this.count;
+    Audio.splash();
+
+    // ===== 立即判定碰撞 =====
+    // 投射路径：从发射点垂直向下到江底
+    const launchX = fx;
+    let hitAny = false;
+
+    const allFish = document.querySelectorAll('.fish-in-river');
+    allFish.forEach(fe=>{
+      if(hitAny||fe.dataset.caught)return;
+      const fr=fe.getBoundingClientRect();
+      const fishCX = fr.left - wr.left + fr.width/2;
+      const fishCY = fr.top - wr.top + fr.height/2;
+      // 鱼在发射点下方且水平范围内 → 命中
+      const dx=Math.abs(launchX-fishCX);
+      const dy=fishCY-fy;
+      if(dx<60&&dy>0&&dy<this._wrapH*0.8){
+        fe.dataset.caught='1';
+        hitAny=true;
+        this.showHitRing(wrap,fishCX,fishCY);
+        fe.style.transition='opacity .25s,transform .35s';
+        fe.style.opacity='0'; fe.style.transform='scale(2) rotate(20deg)';
+        setTimeout(()=>{if(fe.parentNode)fe.remove()},380);
+        Audio.fishCatch();
+        const bonus=12+Math.floor(Math.random()*10);
+        this.showFloatScore(wrap,fishCX,fishCY-18,bonus);
+        this.score+=bonus;
+        Game.scores.zongzi=this.score;
+        document.getElementById('zongzi-score').textContent=this.score;
+        document.getElementById('throw-tip').textContent=['漂亮！鱼被赶跑了！','好准！再来一条！','命中！保护屈原！'][Math.floor(Math.random()*3)];
+      }
+    });
+
+    // 移除飞行元素
+    setTimeout(()=>{if(el.parentNode)el.remove();},600);
+
+    // 基础分
+    this.score+=5;
+    Game.scores.zongzi=this.score;
+    document.getElementById('zongzi-score').textContent=this.score;
+  },
+
+  addTrail(wrap,x,y){
+    // 在飞行路径上创建3个拖尾点
+    for(let i=1;i<=3;i++){
+      const t=document.createElement('div');
+      t.className='trail-dot';
+      t.style.left=(x-4+Math.random()*8)+'px';
+      t.style.top=(y+i*8)+'px';
+      wrap.appendChild(t);
+      setTimeout(()=>t.remove(),400);
+    }
+  },
+
+  showHitRing(wrap,cx,cy){
+    const r=document.createElement('div');
+    r.className='hit-ring';
+    r.style.cssText=`position:absolute;left:${cx-20}px;top:${cy-20}px;width:40px;height:40px;border:2px solid #d4af37;border-radius:50%;z-index:14;pointer-events:none;animation:ringPop .4s ease-out forwards`;
+    wrap.appendChild(r);
+    setTimeout(()=>r.remove(),400);
+  },
+
+  showFloatScore(wrap,x,y,val){
+    const fs=document.createElement('div');
+    fs.className='float-score';
+    fs.textContent='+'+val;
+    fs.style.left=(x-15)+'px'; fs.style.top=y+'px';
+    wrap.appendChild(fs);
+    setTimeout(()=>fs.remove(),700);
+  },
+
+  spawnLoop(){
+    if(!this.running||this.timeLeft<=0) return;
+    if(this.fishes.length<5) this.spawnFish();
+    setTimeout(()=>this.spawnLoop(), 1100+Math.random()*1400);
+  },
+
+  spawnFish(){
+    const wrap=document.getElementById('river-wrap');
+    const wr=wrap.getBoundingClientRect();
+    const emojis=['🐟','🐠','🐡'];
+    const fromLeft=Math.random()>0.5;
+    // 鱼在中下部深水区游动（35%-78%），在投掷路径上
+    const topPct=35+Math.random()*43;
+
+    const el=document.createElement('div');
+    el.className='fish-in-river';
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.top=topPct+'%';
+    const startX=fromLeft?-40:(wr.width+10);
+    el.style.left=startX+'px';
+    wrap.appendChild(el);
+
+    const speed=0.3+Math.random()*0.5;
+    const dir=fromLeft?1:-1;
+    const fishObj={el, x:startX, dir, speed};
+    this.fishes.push(fishObj);
+
+    const swim=()=>{
+      if(!el.parentNode) return;
+      fishObj.x+=dir*speed*2;
+      el.style.left=fishObj.x+'px';
+      if((fromLeft&&fishObj.x>wr.width+50)||(!fromLeft&&fishObj.x<-50)){
+        el.remove();
+        const idx=this.fishes.indexOf(fishObj);
+        if(idx>-1) this.fishes.splice(idx,1);
+        return;
+      }
+      if(this.running) requestAnimationFrame(swim);
+    };
+    requestAnimationFrame(swim);
+  },
+
+  startTimer(){
+    this.timer=setInterval(()=>{
+      this.timeLeft--;
+      const tb=document.getElementById('timer-badge');
+      tb.textContent=this.timeLeft+'s';
+      if(this.timeLeft<=5){ tb.style.color='#b71c1c'; tb.style.fontWeight='700'; }
+      if(this.timeLeft<=0){
+        clearInterval(this.timer);
+        this.finish();
+      }
+    },1000);
+  },
+
+  finish(){
+    this.running=false;
+    cancelAnimationFrame(this.rafId);
+    // 清除鱼
+    document.querySelectorAll('.fish-in-river').forEach(e=>e.remove());
+    this.fishes=[];
+    document.getElementById('throw-tip').textContent='时间到！';
+    setTimeout(()=>Game.showEnd(), 900);
+  },
+
+  gameLoop(){
+    if(!this.running) return;
+    // 可扩展：添加自动漂流动画等
+    this.rafId=requestAnimationFrame(()=>this.gameLoop());
+  }
+};
+
+// ===================================================================
+//  启动
+// ===================================================================
+window.addEventListener('DOMContentLoaded', ()=>Game.init());
+console.log('%c🐉 端午文化探险 v1.0','color:#c41e3a;font-size:14px;font-weight:bold');
+</script>
+</body>
+</html>
