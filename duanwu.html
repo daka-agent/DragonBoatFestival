@@ -49,27 +49,80 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   position:absolute;top:32px;left:25px;border-radius:50%;border:2px solid #a08060;z-index:2}
 .drum-body{width:160px;height:105px;background:linear-gradient(180deg,#b22222 0%,#8b0000 50%,#5c0000 100%);
   border-radius:55px/22px 22px 38px 38px;position:absolute;top:44px;left:20px;cursor:pointer;
-  transition:transform .08s;border:3px solid #6b0000;box-shadow:0 8px 25px rgba(139,0,0,0.3);z-index:3}
-.drum-body.hit{transform:scale(0.94)}
+  transition:transform .06s,box-shadow .06s;border:3px solid #6b0000;
+  box-shadow:0 8px 25px rgba(139,0,0,0.3);z-index:3}
+/* 击中动画：更强烈的压缩+发光 */
+.drum-body.hit{transform:scale(0.88) translateY(4px)!important;
+  box-shadow:0 2px 8px rgba(139,0,0,0.2),0 0 30px rgba(196,30,58,0.7),0 0 60px rgba(255,180,0,0.35)!important}
 .drum-skin-bot{width:146px;height:22px;background:radial-gradient(circle at center,#f0dcc5 0%,#cab89a 100%);
   position:absolute;top:138px;left:27px;border-radius:50%;border:2px solid #a08060;z-index:2}
 .drum-label{position:absolute;top:65px;left:50%;transform:translateX(-50%);font-size:34px;font-weight:900;
   color:rgba(255,215,0,0.65);pointer-events:none;text-shadow:0 2px 4px rgba(0,0,0,0.2);z-index:4}
+/* 击鼓冲击波 */
+.drum-ripple{position:absolute;top:44px;left:20px;width:160px;height:105px;
+  border-radius:55px/22px 22px 38px 38px;border:3px solid rgba(255,215,0,0.8);
+  pointer-events:none;z-index:5;animation:drumRipple .45s ease-out forwards}
+@keyframes drumRipple{
+  0%{transform:scale(1);opacity:0.9}
+  100%{transform:scale(1.55);opacity:0}}
+/* 连击爆字效果 */
+.combo-burst{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  font-size:22px;font-weight:900;color:#ffd700;pointer-events:none;z-index:10;
+  text-shadow:0 0 8px rgba(255,100,0,0.8),2px 2px 0 rgba(139,0,0,0.6);
+  animation:comboBurst .5s cubic-bezier(0.36,0.07,0.19,0.97) forwards}
+@keyframes comboBurst{
+  0%{opacity:1;transform:translateX(-50%) scale(0.5) translateY(0)}
+  60%{opacity:1;transform:translateX(-50%) scale(1.3) translateY(-18px)}
+  100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-35px)}}
 .drum-hint{font-size:14px;color:#c41e3a;font-weight:600;animation:hintPulse 1.2s ease-in-out infinite}
 @keyframes hintPulse{0%,100%{opacity:.7}50%{opacity:1}}
 
 .beat-track{width:100%;display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:4px;min-height:32px}
-.beat-dot{width:26px;height:26px;border-radius:50%;border:2px solid transparent;transition:all .12s;flex-shrink:0;
+.beat-dot{width:26px;height:26px;border-radius:50%;border:2px solid transparent;transition:all .1s;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent}
 .beat-dot.pending{background:rgba(139,0,0,0.1);border-color:rgba(139,0,0,0.25)}
-.beat-dot.active{background:#c41e3a;border-color:#8b0000;animation:beatPop .25s ease;box-shadow:0 0 12px rgba(196,30,58,0.5);color:#fff}
-.beat-dot.hit-ok{background:#2e7d32;border-color:#1b5e20;color:#fff;transform:scale(1.1)}
-.beat-dot.miss{background:#757575;border-color:#424242;opacity:.5}
-@keyframes beatPop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
+.beat-dot.active{background:#c41e3a;border-color:#ffd700;
+  animation:beatPop .22s ease,beatGlow .22s ease;
+  box-shadow:0 0 14px rgba(196,30,58,0.7),0 0 28px rgba(255,215,0,0.3);color:#fff}
+.beat-dot.hit-ok{background:linear-gradient(135deg,#2e7d32,#43a047);border-color:#a5d6a7;color:#fff;
+  transform:scale(1.15);box-shadow:0 0 10px rgba(46,125,50,0.5)}
+.beat-dot.miss{background:#757575;border-color:#424242;opacity:.45}
+@keyframes beatPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes beatGlow{0%{box-shadow:0 0 4px rgba(196,30,58,0.3)}50%{box-shadow:0 0 20px rgba(255,215,0,0.6)}100%{box-shadow:0 0 14px rgba(196,30,58,0.7)}}
 
-.combo-text{font-size:14px;font-weight:700;color:#c41e3a;height:20px;margin-top:4px}
+.combo-text{font-size:15px;font-weight:800;color:#c41e3a;height:22px;margin-top:4px;transition:transform .1s;letter-spacing:0.05em}
 
 /* === 第二关：问答 === */
+.quiz-area{}
+
+/* 屈原对话系统 */
+.quyuan-dialogue{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;
+  min-height:64px;opacity:0;transition:opacity .4s}
+.quyuan-dialogue.show{opacity:1}
+.qy-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(145deg,#d4a574 0%,#8b6914 50%,#5c4509 100%);
+  display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+  border:2px solid rgba(212,175,55,0.5);box-shadow:0 3px 10px rgba(0,0,0,0.2);
+  animation:qyFloat 3s ease-in-out infinite}
+@keyframes qyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.qy-bubble-wrap{flex:1;padding-top:2px}
+.qy-bubble{position:relative;background:linear-gradient(135deg,#fffef8 0%,#fef6e8 100%);
+  border:1.5px solid #d4c4a8;border-radius:14px;padding:10px 14px;
+  box-shadow:0 2px 8px rgba(139,105,20,0.08);max-width:100%}
+.qy-bubble::before{
+  content:'';position:absolute;left:-7px;top:16px;
+  width:12px;height:12px;background:#fffef8;
+  border-left:1.5px solid #d4c4a8;border-top:1.5px solid #d4c4a8;
+  transform:rotate(-45deg);border-radius:2px}
+.qy-text{font-size:13px;color:#5c4528;line-height:1.65;font-style:italic;
+  white-space:pre-line;min-height:20px}
+/* 答题后的反应气泡样式变化 */
+.qy-bubble.praise{background:linear-gradient(135deg,#e8f5e9 0%,#c8e6c9 100%);
+  border-color:#81c784}
+.qy-bubble.praise::before{background:#e8f5e9;border-color:#81c784}
+.qy-bubble.encourage{background:linear-gradient(135deg,#fff3e0 0%,#ffe0b2 100%);
+  border-color:#ffb74d}
+.qy-bubble.encourage::before{background:#fff3e0;border-color:#ffb74d}
+
 .quiz-area{}
 .quiz-num{text-align:right;font-size:12px;color:#999;margin-bottom:8px}
 .quiz-q{font-size:15px;color:#2c2416;font-weight:600;line-height:1.7;margin-bottom:14px;text-align:left;padding:0 4px}
@@ -163,6 +216,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   animation:floatUp .7s ease-out forwards;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
 .fish-in-river{position:absolute;font-size:26px;z-index:4;cursor:pointer;transition:opacity .3s;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.2))}
+.fish-right{transform:scaleX(-1)}
 @keyframes ringPop{0%{opacity:1;transform:scale(0.5)}100%{opacity:0;transform:scale(2)}}
 
 /* === 通关页 === */
@@ -258,6 +312,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   <div class="game-card quiz-area slide-up">
     <div class="stage-title">第二关 · 端午问答</div>
     <div class="stage-desc">屈原穿越时空带来了文化谜题<br>答对问题，解锁更多文化记忆！</div>
+
+    <!-- 屈原插话区 -->
+    <div class="quyuan-dialogue" id="quyuan-dialogue">
+      <div class="qy-avatar">👤</div>
+      <div class="qy-bubble-wrap">
+        <div class="qy-bubble" id="qy-bubble">
+          <div class="qy-text" id="qy-text">……</div>
+        </div>
+      </div>
+    </div>
+
     <div class="score-bar"><span>得分：<b id="quiz-score">0</b></span><span id="quiz-num">第 1 题 / 共 5 题</span></div>
     <div class="progress-wrap"><div id="quiz-prog" class="progress-fill" style="width:0%"></div></div>
 
@@ -332,19 +397,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 // ===================================================================
 const Audio = (() => {
   let ctx = null;
-  function get(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); return ctx; }
+  function get(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); return ctx; }
+  function resume(){ if(!ctx) get(); if(ctx&&ctx.state==='suspended') ctx.resume(); }
 
   function drum(intensity=1){
     const c=get(), t=c.currentTime;
+    // 低频主体 - 厚重"咚"声
     const o=c.createOscillator(), g=c.createGain();
-    o.type='sine'; o.frequency.setValueAtTime(150*intensity,t); o.frequency.exponentialRampToValueAtTime(38,t+0.16);
-    g.gain.setValueAtTime(0.55*intensity,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
-    o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.3);
-    // 泛音
+    o.type='sine'; o.frequency.setValueAtTime(120*intensity,t); o.frequency.exponentialRampToValueAtTime(30,t+0.25);
+    g.gain.setValueAtTime(0.75*intensity,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.38);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.38);
+    // 中频冲击感
     const o2=c.createOscillator(), g2=c.createGain();
-    o2.type='triangle'; o2.frequency.setValueAtTime(290*intensity,t); o2.frequency.exponentialRampToValueAtTime(115,t+0.08);
-    g2.gain.setValueAtTime(0.22*intensity,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.12);
-    o2.connect(g2).connect(c.destination); o2.start(t); o2.stop(t+0.12);
+    o2.type='triangle'; o2.frequency.setValueAtTime(320*intensity,t); o2.frequency.exponentialRampToValueAtTime(80,t+0.1);
+    g2.gain.setValueAtTime(0.35*intensity,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+    o2.connect(g2).connect(c.destination); o2.start(t); o2.stop(t+0.14);
+    // 噪声冲击层（鼓皮张力感）
+    const bufLen=c.sampleRate*0.06, buf=c.createBuffer(1,bufLen,c.sampleRate);
+    const d=buf.getChannelData(0); for(let i=0;i<bufLen;i++) d[i]=(Math.random()*2-1);
+    const ns=c.createBufferSource(), ngain=c.createGain(), bpf=c.createBiquadFilter();
+    bpf.type='bandpass'; bpf.frequency.value=1200; bpf.Q.value=0.8;
+    ngain.gain.setValueAtTime(0.28*intensity,t); ngain.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+    ns.buffer=buf; ns.connect(bpf).connect(ngain).connect(c.destination); ns.start(t);
   }
 
   function correctNote(){
@@ -383,24 +457,83 @@ const Audio = (() => {
     o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.2);
   }
 
-  return { drum, correctNote, wrongNote, splash, fishCatch }
+  return { drum, correctNote, wrongNote, splash, fishCatch, resume }
 })();
 
 // ===================================================================
 //  题库
 // ===================================================================
-const QUIZ = [
+const QUIZ_ALL = [
+  // === 屈原与楚辞 ===
   { q:"端午节最初是为了纪念哪位历史人物？", opt:["屈原","李白","杜甫","苏轼"], ans:0,
-    info:"端午节源于纪念战国时期楚国大夫屈原。公元前278年，秦军攻破楚国都城，屈原于五月五日投汨罗江自尽，后人以此日纪念他。" },
-  { q:"以下哪个不是端午节的传统习俗？", opt:["吃月饼","挂艾草","赛龙舟","佩香囊"], ans:0,
-    info:"中秋节才吃月饼！端午节的传统习俗包括：赛龙舟、吃粽子、挂艾草与菖蒲、佩香囊、系五彩绳等。" },
+    info:"端午节源于纪念战国时期楚国大夫屈原。后人以五月五日纪念他，传承两千年至今。",
+    quyuan:"吾名屈平，字原，楚国之臣……\n你竟还记得我？" },
   { q:"《离骚》是谁的作品？", opt:["孔子","屈原","孟子","庄子"], ans:1,
-    info:"《离骚》是屈原的代表作，是中国古代最长的抒情诗。'路漫漫其修远兮，吾将上下而求索'即出自此篇。" },
-  { q:"粽子主要有哪两大口味派别之争？", opt:["甜党 vs 咸党","辣党 vs 不辣党","冷党 vs 热党","硬党 vs 软党"], ans:0,
-    info:"北方人偏爱甜粽（红枣、豆沙馅），南方人钟情咸粽（鲜肉、蛋黄馅）。这可是每年端午节的热门话题哦！" },
+    info:"《离骚》是屈原的代表作，中国古代最长的抒情诗。",
+    quyuan:"'路漫漫其修远兮，吾将上下而求索'\n——你可读懂这其中的执着？" },
+  { q:"'亦余心之所善兮，虽九死其犹未悔'表达了什么？", opt:["追求美食不怕胖","坚持理想至死不渝","喜欢旅行不怕远","热爱工作不辞职"], ans:1,
+    info:"这句诗表达了屈原对理想和信念的坚定追求，即便牺牲生命也不后悔。",
+    quyuan:"世人笑我痴狂，\n可有些东西……值得用生命去守。" },
   { q:"屈原是哪个诸侯国的诗人？", opt:["秦国","齐国","楚国","燕国"], ans:2,
-    info:"屈原（约前340—前278），名平，字原，战国时期楚国贵族、政治家、诗人。他是中国浪漫主义文学的奠基人。" }
+    info:"屈原（约前340—前278），战国时期楚国贵族、政治家、诗人。中国浪漫主义文学奠基人。",
+    quyuan:"我是楚人。\n楚地山川，一草一木，皆入我梦。" },
+  { q:"'举世皆浊我独清，众人皆醉我独醒'出自哪里？", opt:["《论语》","《孟子》","《渔父》（屈原）","《庄子》"], ans:2,
+    info:"出自《渔父》，记载了屈原被流放后与一位渔父的对话，展现了他的高洁品格。",
+    quyuan:"那位渔父劝我随波逐流……\n可你呢？你会如何选择？" },
+
+  // === 端午习俗 ===
+  { q:"以下哪个不是端午节的传统习俗？", opt:["吃月饼","挂艾草","赛龙舟","佩香囊"], ans:0,
+    info:"中秋节才吃月饼！端午习俗：赛龙舟、吃粽子、挂艾草菖蒲、佩香囊、系五彩绳等。",
+    quyuan:"后世之人以各种方式纪念此日……\n倒也热闹。" },
+  { q:"古人端午节挂艾草和菖蒲的主要目的是？", opt:["装饰房屋好看","驱邪避疫保平安","当食材烹饪","送给邻居礼物"], ans:1,
+    info:"艾草和菖蒲有特殊的香气，古人认为可以驱除蚊虫和瘟疫，保护家人健康。",
+    quyuan:"楚地湿气重，艾草之香\n能驱散的不止蚊虫……" },
+  { q:"端午节系五彩绳的习俗象征什么？", opt:["时尚配饰","避兵鬼、防伤害","标记已婚人士","区分敌我阵营"], ans:1,
+    info:"五彩绳又称'长命缕'，古人认为五彩丝线可以避邪驱鬼，保佑儿童平安健康。",
+    quyuan:"我曾见孩童腕上系五色丝线……\n那是父母最朴素的心愿——平安。" },
+  { q:"雄黄酒在端午节有什么特殊意义？", opt:["庆祝丰收","辟虫解毒祭屈原","招待贵宾壮胆量","祭祀祖先必备"], ans:1,
+    info:"古人认为雄黄酒可以驱蛇虫、避毒邪，《白蛇传》中白娘子喝雄黄酒现原形的故事家喻户晓。",
+    quyuan:"雄黄烈酒……\n呵，凡人总有各种方式祈求安康。" },
+
+  // === 粽子文化 ===
+  { q:"粽子主要有哪两大口味派别之争？", opt:["甜党 vs 咸党","辣党 vs 不辣党","冷党 vs 热党","硬党 vs 软党"], ans:0,
+    info:"北方偏爱甜粽（红枣、豆沙），南方钟情咸粽（鲜肉、蛋黄）。每年端午必吵！",
+    quyuan:"我所处之时，粽子不过竹筒装米投入江中……\n没想到后世演变成这般'甜咸大战'" },
+  { q:"传说最初投粽子入江是为了？", opt:["喂饱屈原别饿了","防止鱼虾咬食屈原身体","祭祀河神求风调雨顺","比赛看谁投得准"], ans:1,
+    info:"百姓听说屈原投江后，纷纷划船去救，并投下粽子喂鱼虾，希望它们不要伤害屈原的身体。",
+    quyuan:"百姓投粽入江之心……\n屈原感念至今。" },
+  { q:"南方咸粽最常见的馅料不包括以下哪种？", opt:["五花肉","蛋黄","豆沙","香菇"], ans:2,
+    info:"豆沙是甜粽的经典馅料！咸粽常见馅料：五花肉、咸蛋黄、香菇、栗子、虾米等。",
+    quyuan:"粽叶包裹的不仅是米……\n还有一方水土的记忆。" },
+
+  // === 龙舟竞渡 ===
+  { q:"龙舟竞渡最早起源于哪个地区？", opt:["长江上游","黄河流域","长江中下游（吴越）","珠江三角洲"], ans:2,
+    info:"龙舟竞渡起源于长江中下游的吴越地区（今江浙一带），最早是古越人祭龙神的仪式。",
+    quyuan:"鼓声三下响，龙船水上飞……\n那场面，想必十分壮观！" },
+  { q:"龙舟上的'鼓手'最重要的作用是什么？", opt:["表演才艺","指挥划桨节奏","吓跑水怪","传递信号给岸上观众"], ans:1,
+    info:"鼓手通过鼓点控制整艘龙舟的划桨节奏，全船动作一致才能达到最快速度。鼓手就是龙船的'心跳'！",
+    quyuan:"咚——咚——咚——\n鼓声即军令，万众一心！" },
+  { q:"国际龙舟联合会的总部设在？", opt:["北京","广州","香港","新加坡"], ans:2,
+    info:"国际龙舟联合会(IDBF)总部设在香港。龙舟已从中国传统民俗发展为全球性竞技运动！",
+    quyuan:"龙舟竞渡……\n竟能传遍四海，实乃幸事。" },
+
+  // === 综合知识 ===
+  { q:"端午节是中国传统节日中第一个被列入什么的世界文化遗产？", opt:["联合国教科文组织人类非物质文化遗产",
+"世界自然遗产","世界记忆遗产","世界地质遗产"], ans:0,
+    info:"2009年9月，联合国教科文组织正式批准中国端午节列入'人类非物质文化遗产代表作名录'。",
+    quyuan:"两千年的传承……\n终被世界所见证。" }
 ];
+
+// 每局随机抽选5题
+function shuffleQuiz(){
+  const arr = [...QUIZ_ALL];
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr.slice(0, Math.min(5, arr.length));
+}
+let QUIZ = [];
 
 // ===================================================================
 //  文化碎片 & 屈原寄语
@@ -421,7 +554,6 @@ const Game = {
   total(){ return this.scores.drum + this.scores.quiz + this.scores.zongzi; },
 
   init(){
-    Audio.drum(); // 预初始化 AudioContext
     document.getElementById('btn-start').onclick = ()=>this.goTo('drum-page', ()=>Drum.init());
     document.getElementById('btn-submit').onclick = ()=>this.submitScore();
     document.getElementById('btn-restart').onclick = ()=>this.restart();
@@ -578,11 +710,11 @@ const Drum = {
         if(this._pending===cur && document.querySelector(`.beat-dot[data-i="${cur}"]`)?.classList.contains('active')){
           this.miss(cur);
         }
-      }, 420);
+      }, 380);
     }
 
     this.idx++;
-    if(this.idx<this.pattern.length) this.timer=setTimeout(()=>this.loop(), 510);
+    if(this.idx<this.pattern.length) this.timer=setTimeout(()=>this.loop(), 460);
     else setTimeout(()=>this.finish(), 600);
   },
 
@@ -590,12 +722,50 @@ const Drum = {
     if(!this.running) return;
     Audio.drum();
     const body=document.getElementById('drum-body');
-    body.classList.add('hit'); setTimeout(()=>body.classList.remove('hit'), 80);
+    // 更强的压缩动画
+    body.classList.add('hit');
+    setTimeout(()=>body.classList.remove('hit'), 100);
+
+    // 冲击波扩散圈
+    const visual=document.querySelector('.drum-visual');
+    const ripple=document.createElement('div');
+    ripple.className='drum-ripple';
+    visual.appendChild(ripple);
+    setTimeout(()=>ripple.remove(), 460);
+
+    // 击中粒子爆炸（从鼓面中心向外散射）
+    this.spawnParticles();
 
     // 找到当前 active 拍
     for(let i=0;i<this.pattern.length;i++){
       const el=document.querySelector(`.beat-dot[data-i="${i}"]`);
       if(el && el.classList.contains('active')){ this.onHit(i); return; }
+    }
+  },
+
+  spawnParticles(){
+    const body=document.getElementById('drum-body');
+    const rect=body.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    const colors=['#ffd700','#ff4444','#fff','#ffaa00','#ff8c00'];
+    for(let i=0;i<10;i++){
+      const p=document.createElement('div');
+      p.className='particle';
+      const angle=Math.random()*Math.PI*2;
+      const dist=40+Math.random()*55;
+      const size=4+Math.random()*6;
+      p.style.cssText=`left:${cx-size/2}px;top:${cy-size/2}px;width:${size}px;height:${size}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        --tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px`;
+      p.style.animation='ptclFade .6s ease-out forwards';
+      p.style.transform=`translate(var(--tx),var(--ty))`;
+      // 改用keyframe直接内联
+      p.animate([
+        {opacity:1,transform:`translate(0,0) scale(1)`},
+        {opacity:0,transform:`translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`}
+      ],{duration:500+Math.random()*200,easing:'ease-out',fill:'forwards'});
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(), 700);
     }
   },
 
@@ -612,8 +782,28 @@ const Drum = {
     Game.scores.drum=this.score;
     document.getElementById('drum-score').textContent=this.score;
     document.getElementById('drum-combo').textContent=this.combo;
+
     const ct=document.getElementById('combo-text');
-    if(this.combo>=3){ ct.textContent=this.combo+'连击!'; ct.style.transform='scale(1.12)'; setTimeout(()=>ct.style.transform='',140); }
+    if(this.combo>=3){
+      ct.textContent=this.combo+'连击！';
+      ct.style.color= this.combo>=8?'#ff4500': this.combo>=5?'#ff8c00':'#c41e3a';
+      ct.style.transform='scale(1.2)';
+      setTimeout(()=>ct.style.transform='scale(1)',160);
+
+      // 连击爆字弹出（5连以上触发）
+      if(this.combo>=5){
+        const visual=document.querySelector('.drum-visual');
+        const burst=document.createElement('div');
+        burst.className='combo-burst';
+        burst.textContent= this.combo>=10?'🔥'+this.combo+'连！': this.combo>=8?'⚡'+this.combo+'连！':'✨'+this.combo+'连！';
+        visual.appendChild(burst);
+        setTimeout(()=>burst.remove(), 520);
+        // 高连击时加强鼓声
+        if(this.combo>=8) Audio.drum(1.3);
+      }
+    } else {
+      ct.textContent='';
+    }
   },
 
   miss(i){
@@ -639,7 +829,7 @@ const Quiz = {
   idx:0, score:0, locked:false,
   reset(){ this.idx=0; this.score=0; this.locked=false; },
 
-  init(){ this.idx=0; this.score=0; this.locked=false; this.show(); },
+  init(){ this.idx=0; this.score=0; this.locked=false; QUIZ=shuffleQuiz(); this.show(); },
 
   show(){
     if(this.idx>=QUIZ.length){ setTimeout(()=>Game.goTo('zongzi-page', ()=>Zongzi.init()), 600); return; }
@@ -647,19 +837,53 @@ const Quiz = {
     const d=QUIZ[this.idx];
     document.getElementById('quiz-num').textContent=`第 ${this.idx+1} 题 / 共 ${QUIZ.length} 题`;
     document.getElementById('quiz-prog').style.width = (this.idx/QUIZ.length*100)+'%';
-    document.getElementById('quiz-q').textContent=d.q;
-    const opts=document.getElementById('quiz-opts');
-    opts.innerHTML='';
-    d.opt.forEach((o,i)=>{
-      const b=document.createElement('div');
-      b.className='quiz-opt';
-      b.innerHTML=`<span style="margin-right:6px;color:#c41e3a">${['A','B','C','D'][i]}</span>${Game.esc(o)}`;
-      b.onclick=()=>this.answer(i);
-      opts.appendChild(b);
-    });
-    const fb=document.getElementById('quiz-fb'); fb.className='quiz-fb'; fb.innerHTML='&nbsp;';
     document.getElementById('quiz-score').textContent=this.score;
     Game.scores.quiz=this.score;
+
+    // 清空
+    document.getElementById('quiz-opts').innerHTML='';
+    document.getElementById('quiz-q').textContent='';
+    const fb=document.getElementById('quiz-fb'); fb.className='quiz-fb'; fb.innerHTML='&nbsp;';
+
+    // 屈原出题插话（打字机效果）
+    this.showQuyuanSay(d.quyuan || '来，试试这道题……', () => {
+      document.getElementById('quiz-q').textContent=d.q;
+      const opts=document.getElementById('quiz-opts');
+      d.opt.forEach((o,i)=>{
+        const b=document.createElement('div');
+        b.className='quiz-opt';
+        b.innerHTML='<span style="margin-right:6px;color:#c41e3a">'+['A','B','C','D'][i]+'</span>'+Game.esc(o);
+        b.onclick=()=>this.answer(i);
+        opts.appendChild(b);
+      });
+    });
+  },
+
+  showQuyuanSay(text, callback){
+    var dialog = document.getElementById('quyuan-dialogue');
+    var bubble = document.getElementById('qy-bubble');
+    var qyText = document.getElementById('qy-text');
+    bubble.className = 'qy-bubble';
+    dialog.classList.add('show');
+    qyText.textContent = '';
+    var i = 0, chars = text.split('');
+    var iv = setInterval(function(){
+      if(i < chars.length){ qyText.textContent += chars[i]; i++; }
+      else { clearInterval(iv); setTimeout(callback, 800); }
+    }, 55);
+  },
+
+  showQuyuanReaction(isCorrect){
+    var bubble = document.getElementById('qy-bubble');
+    var qyText = document.getElementById('qy-text');
+    var praise = ["善！\n你果然是有心人。","好极了！\n此答正合我意。","妙哉！\n文化之火在你手中传递。","不错不错！\n吾心甚慰。","答得漂亮！\n年轻人有前途！"];
+    var enc = ["无妨。\n知错能改，善莫大焉。","不必灰心。\n学问之道，在渐修。","呵……\n这道确实不易。","没关系。\n下次定会更好。"];
+    var lines = isCorrect ? praise : enc;
+    var text = lines[Math.floor(Math.random() * lines.length)];
+    bubble.className = isCorrect ? 'qy-bubble praise' : 'qy-bubble encourage';
+    qyText.textContent = '';
+    var i = 0, chars = text.split('');
+    var iv = setInterval(function(){ if(i<chars.length){ qyText.textContent+=chars[i];i++;}else clearInterval(iv); }, 40);
   },
 
   answer(choice){
@@ -676,19 +900,21 @@ const Quiz = {
       fb.innerHTML='✓ 回答正确！'+d.info;
       this.score+=20;
       Audio.correctNote();
+      this.showQuyuanReaction(true);
     } else {
       opts[choice].classList.add('wrong');
       opts[d.ans].classList.add('correct');
       fb.className='quiz-fb fb-wrong';
       fb.innerHTML='✗ 正确答案是 '+['A','B','C','D'][d.ans]+'. '+d.info;
       Audio.wrongNote();
+      this.showQuyuanReaction(false);
     }
     this.locked=true;
     document.getElementById('quiz-score').textContent=this.score;
     Game.scores.quiz=this.score;
     document.getElementById('quiz-prog').style.width=((this.idx+1)/QUIZ.length*100)+'%';
     this.idx++;
-    setTimeout(()=>this.show(), 3300);
+    setTimeout(()=>this.show(), 3500);
   }
 };
 
@@ -826,14 +1052,14 @@ const Zongzi = {
 
   spawnLoop(){
     if(!this.running||this.timeLeft<=0) return;
-    if(this.fishes.length<5) this.spawnFish();
-    setTimeout(()=>this.spawnLoop(), 1100+Math.random()*1400);
+    if(this.fishes.length<10) this.spawnFish();
+    setTimeout(()=>this.spawnLoop(), 600+Math.random()*900);
   },
 
   spawnFish(){
     const wrap=document.getElementById('river-wrap');
     const wr=wrap.getBoundingClientRect();
-    const emojis=['🐟','🐠','🐡'];
+    const emojis=['🐟','🐠','🐡','🐟','🐠','🦈','🐬','🐳'];
     const fromLeft=Math.random()>0.5;
     // 鱼在中下部深水区游动（35%-78%），在投掷路径上
     const topPct=35+Math.random()*43;
@@ -848,6 +1074,7 @@ const Zongzi = {
 
     const speed=0.3+Math.random()*0.5;
     const dir=fromLeft?1:-1;
+    if(dir===1) el.classList.add('fish-right');
     const fishObj={el, x:startX, dir, speed};
     this.fishes.push(fishObj);
 
@@ -900,6 +1127,10 @@ const Zongzi = {
 //  启动
 // ===================================================================
 window.addEventListener('DOMContentLoaded', ()=>Game.init());
+// 浏览器策略：AudioContext 必须在用户手势后 resume，一次性监听
+['click','touchstart','keydown'].forEach(ev=>{
+  document.addEventListener(ev, function once(){ Audio.resume(); document.removeEventListener(ev,once); }, {once:true});
+});
 console.log('%c🐉 端午文化探险 v1.0','color:#c41e3a;font-size:14px;font-weight:bold');
 </script>
 </body>
