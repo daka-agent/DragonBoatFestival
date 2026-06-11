@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
+<!-- 百度统计 -->
+<script>
+var _hmt = _hmt || [];
+(function(){
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?a1aecc6ee2c7dd86c83b61065695e361";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
 <title>端午文化探险</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -581,7 +591,7 @@ const Game = {
   total(){ return this.scores.drum + this.scores.quiz + this.scores.zongzi; },
 
   init(){
-    document.getElementById('btn-start').onclick = ()=>this.goTo('drum-page', ()=>Drum.init());
+    document.getElementById('btn-start').onclick = ()=>{ if(window._hmt) _hmt.push(['_trackEvent','game','start']); this.goTo('drum-page', ()=>Drum.init()); },
     document.getElementById('btn-submit').onclick = ()=>this.submitScore();
     document.getElementById('btn-restart').onclick = ()=>this.restart();
     document.getElementById('btn-leader').onclick = ()=>this.showLB();
@@ -691,6 +701,7 @@ const Game = {
     btn.textContent = '提交中...'; btn.disabled = true;
     const name = (document.getElementById('player-name').value.trim())||'匿名侠';
     await this.saveLB(name, this.total());
+    if(window._hmt) _hmt.push(['_trackEvent','game','submit_score',name,this.total()]);
     btn.textContent = origText; btn.disabled = false;
     this.showLB();
     Audio.correctNote();
@@ -720,6 +731,7 @@ const Game = {
   // --- 结束画面 ---
   showEnd(){
     const total = this.total();
+    if(window._hmt) _hmt.push(['_trackEvent','game','complete',null,total]);
     document.getElementById('total-score').textContent = total;
     document.getElementById('quyuan-talk').textContent = quyuanMsg(total);
     const n = Math.min(FRAGS.length, Math.max(3, Math.floor(total/18)));
