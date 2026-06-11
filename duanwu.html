@@ -219,6 +219,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .fish-right{transform:scaleX(-1)}
 @keyframes ringPop{0%{opacity:1;transform:scale(0.5)}100%{opacity:0;transform:scale(2)}}
 
+/* === 倒计时遮罩 === */
+#countdown-mask{
+  position:absolute;inset:0;z-index:50;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(139,0,0,0.82);border-radius:inherit;
+  gap:12px;
+}
+#countdown-num{
+  font-size:clamp(72px,20vw,110px);font-weight:900;color:#ffd700;
+  line-height:1;text-shadow:0 0 30px rgba(255,215,0,0.8),0 4px 12px rgba(0,0,0,0.5);
+  animation:cdPop .5s ease-out forwards;
+}
+#countdown-hint{font-size:16px;color:rgba(255,255,255,0.85);letter-spacing:0.12em;}
+@keyframes cdPop{
+  0%{transform:scale(1.8);opacity:0}
+  60%{transform:scale(0.95);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+
 /* === 通关页 === */
 .end-card{width:min(380px,88vw)}
 .end-banner{font-size:clamp(24px,6vw,38px);color:#8b0000;font-weight:900;letter-spacing:0.12em;margin-bottom:8px;
@@ -250,11 +269,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 /* 排行榜 */
 .lb-section{margin-top:18px;width:100%;display:none}
 .lb-title{font-size:15px;color:#8b0000;font-weight:700;margin-bottom:10px;letter-spacing:0.08em}
+.lb-cloud-tag{display:inline-block;font-size:10px;background:linear-gradient(135deg,#1d9e75,#5dcaa5);color:#fff;padding:1px 7px;border-radius:8px;vertical-align:middle;margin-left:6px;font-weight:500}
 .lb-table{width:100%;border-collapse:collapse;font-size:13px}
 .lb-table th{background:rgba(196,30,58,0.08);color:#8b0000;padding:7px 5px;font-weight:600;border-bottom:1.5px solid rgba(196,30,58,0.18)}
 .lb-table td{padding:6px 5px;border-bottom:1px solid #eee;color:#3d3018;text-align:center}
 .lb-table tr.hl td{background:rgba(29,158,117,0.08);font-weight:600;color:#0F6E56}
 .lb-empty{color:#999;padding:16px;font-size:13px}
+.lb-sync{font-size:11px;color:#999;margin-top:6px;text-align:right}
 
 /* 粒子 */
 .particle{position:fixed;pointer-events:none;z-index:100;border-radius:50%;animation:ptclFade .9s ease-out forwards}
@@ -289,7 +310,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 
 <!-- ========== 第一关：击鼓传声 ========== -->
 <div id="drum-page" class="page">
-  <div class="game-card drum-area slide-up">
+  <div class="game-card drum-area slide-up" style="position:relative">
+    <!-- 倒计时遮罩 -->
+    <div id="countdown-mask">
+      <div id="countdown-num">3</div>
+      <div id="countdown-hint">做好准备，跟着鼓点击打！</div>
+    </div>
     <div class="stage-title">第一关 · 击鼓传声</div>
     <div class="stage-desc">跟随鼓点击打，节奏越准分数越高！<br>屈原的龙舟需要你的鼓声才能启航。</div>
     <div class="score-bar"><span>得分：<b id="drum-score">0</b></span><span>连击：<b id="drum-combo">0</b></span></div>
@@ -385,8 +411,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
     <button class="btn-leader" id="btn-leader">查看排行榜</button>
 
     <div class="lb-section" id="lb-section">
-      <div class="lb-title">—— 文化榜 ——</div>
+      <div class="lb-title">—— 文化榜 ——<span class="lb-cloud-tag">☁️ 云端</span></div>
       <table class="lb-table"><thead><tr><th>排名</th><th>名字</th><th>总分</th></tr></thead><tbody id="lb-body"></tbody></table>
+      <div class="lb-sync" id="lb-sync"></div>
     </div>
   </div>
 </div>
@@ -595,21 +622,76 @@ const Game = {
     this.goTo('title-page');
   },
 
-  // --- 排行榜 (localStorage + 可选 JSONBin) ---
+  // --- 排行榜 (JSONBin 云端 + localStorage 降级) ---
   LB_KEY: 'duanwu_lb',
+  JB_BIN: '6a2ad19bf5f4af5e29dfe98e',
+  JB_KEY: '$2a$10$cCeNWB5puAIS.ADCodxi/OWu7WK8lqE.hhSmByV8RDfy2XSXzEF5m',
+  JB_URL: 'https://api.jsonbin.io/v3/b/6a2ad19bf5f4af5e29dfe98e',
+
   async getLB(){
+    // 优先从 JSONBin 云端拉取
+    try{
+      const res = await fetch(this.JB_URL+'/latest?meta=false', {signal: AbortSignal.timeout(5000)});
+      if(res.ok){
+        const data = await res.json();
+        if(Array.isArray(data.records)){
+          // 同步缓存到本地
+          localStorage.setItem(this.LB_KEY, JSON.stringify(data.records.slice(0,20)));
+          return data.records.slice(0,20);
+        }
+      }
+    }catch(e){ /* 网络不通，降级本地 */ }
+    // 降级：读本地
     try{ return JSON.parse(localStorage.getItem(this.LB_KEY))||[]; }catch(e){ return []; }
   },
+
   async saveLB(name, score){
-    const records = await this.getLB();
-    records.push({name,score,date:new Date().toLocaleDateString('zh-CN')});
-    records.sort((a,b)=>b.score-a.score);
-    localStorage.setItem(this.LB_KEY, JSON.stringify(records.slice(0,20)));
+    const record = {name, score, date: new Date().toLocaleDateString('zh-CN')};
+    // 1. 先存本地（确保不丢）
+    let local = [];
+    try{ local = JSON.parse(localStorage.getItem(this.LB_KEY))||[]; }catch(e){}
+    local.push(record);
+    local.sort((a,b)=>b.score-a.score);
+    local = local.slice(0,20);
+    localStorage.setItem(this.LB_KEY, JSON.stringify(local));
+
+    // 2. 推送到 JSONBin 云端
+    try{
+      // 读取云端最新数据，合并，写回
+      const res = await fetch(this.JB_URL+'/latest?meta=false', {signal: AbortSignal.timeout(5000)});
+      let cloud = [];
+      if(res.ok){
+        const data = await res.json();
+        if(Array.isArray(data.records)) cloud = data.records;
+      }
+      // 合并：去重（同名字同分数同日期视为重复）
+      const exists = cloud.some(r=>r.name===record.name&&r.score===record.score&&r.date===record.date);
+      if(!exists) cloud.push(record);
+      cloud.sort((a,b)=>b.score-a.score);
+      cloud = cloud.slice(0,50); // 云端多存一些
+
+      await fetch(this.JB_URL, {
+        method:'PUT',
+        headers:{
+          'Content-Type':'application/json',
+          'X-Access-Key': this.JB_KEY
+        },
+        body: JSON.stringify({records:cloud})
+      });
+      // 推送成功后用云端数据刷新本地
+      localStorage.setItem(this.LB_KEY, JSON.stringify(cloud.slice(0,20)));
+    }catch(e){
+      console.warn('排行榜云端同步失败，仅本地保存:', e.message);
+    }
   },
 
   async submitScore(){
+    const btn = document.getElementById('btn-submit');
+    const origText = btn.textContent;
+    btn.textContent = '提交中...'; btn.disabled = true;
     const name = (document.getElementById('player-name').value.trim())||'匿名侠';
     await this.saveLB(name, this.total());
+    btn.textContent = origText; btn.disabled = false;
     this.showLB();
     Audio.correctNote();
   },
@@ -617,8 +699,10 @@ const Game = {
   async showLB(){
     const section = document.getElementById('lb-section');
     section.style.display='block';
-    const records = await this.getLB();
     const tbody = document.getElementById('lb-body');
+    tbody.innerHTML='<tr><td colspan="3" class="lb-empty">🔄 加载排行榜中...</td></tr>';
+
+    const records = await this.getLB();
     const myScore = this.total();
     if(!records.length){ tbody.innerHTML='<tr><td colspan="3" class="lb-empty">暂无记录，快来提交吧！</td></tr>'; return; }
     tbody.innerHTML = records.map((r,i)=>
@@ -628,6 +712,7 @@ const Game = {
         <td><b>${r.score}</b></td>
       </tr>`
     ).join('');
+    document.getElementById('lb-sync').textContent='☁️ 已同步云端';
   },
 
   esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; },
@@ -665,12 +750,44 @@ const Drum = {
   reset(){ this.score=0; this.combo=0; this.maxCombo=0; this.idx=0; this.pattern=[]; this.running=false; },
 
   init(){
-    this.score=0; this.combo=0; this.maxCombo=0; this.idx=0; this.running=true;
+    this.score=0; this.combo=0; this.maxCombo=0; this.idx=0; this.running=false;
     document.getElementById('drum-score').textContent='0';
     document.getElementById('drum-combo').textContent='0';
     this.genPattern();
     this.renderBeats();
-    this.loop();
+    this.startCountdown();
+  },
+
+  startCountdown(){
+    const mask=document.getElementById('countdown-mask');
+    const numEl=document.getElementById('countdown-num');
+    const hintEl=document.getElementById('countdown-hint');
+    mask.style.display='flex';
+    let n=3;
+    numEl.textContent=n;
+    // 触发动画重置
+    numEl.style.animation='none';
+    requestAnimationFrame(()=>{ numEl.style.animation=''; });
+
+    const tick=setInterval(()=>{
+      n--;
+      if(n>0){
+        numEl.textContent=n;
+        numEl.style.animation='none';
+        requestAnimationFrame(()=>{ numEl.style.animation=''; });
+        Audio.splash();
+      } else {
+        clearInterval(tick);
+        numEl.textContent='🥁';
+        hintEl.textContent='开始！';
+        Audio.drum(1.2);
+        setTimeout(()=>{
+          mask.style.display='none';
+          this.running=true;
+          this.loop();
+        }, 600);
+      }
+    }, 900);
   },
 
   genPattern(){
