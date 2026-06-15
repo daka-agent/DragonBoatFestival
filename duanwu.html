@@ -234,12 +234,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .poster-mask{position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)}
 .poster-content{position:relative;max-width:92vw;max-height:92vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px;z-index:1}
 .poster-hint{color:rgba(255,255,255,0.85);font-size:13px;text-align:center;line-height:1.6}
-.poster-wrap{background:#fff;padding:0;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.4);max-height:70vh;overflow:hidden}
-#poster-canvas{display:block;width:auto;height:auto;max-width:88vw;max-height:68vh;object-fit:contain}
+.poster-wrap{background:#fff;padding:0;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.4);max-height:70vh;overflow:hidden;position:relative;-webkit-touch-callout:default;user-select:none;-webkit-user-select:none}
+#poster-canvas{display:block;width:auto;height:auto;max-width:88vw;max-height:68vh;object-fit:contain;-webkit-touch-callout:default}
 .poster-actions{display:flex;gap:10px;width:100%;max-width:300px}
 .btn-download,.btn-close{flex:1;padding:10px;border:none;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer}
 .btn-download{background:linear-gradient(135deg,#c41e3a,#8b0000);color:#fff}
 .btn-close{background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3)}
+/* PC 端才显示下载按钮（移动端/微信内不显示，避免误点） */
+@media (hover:hover) and (pointer:fine){.btn-download{display:inline-block}}
+@media (hover:none){.btn-download{display:none}}
+/* 长按时的视觉提示 */
+.poster-wrap.pressing{outline:3px solid #d4af37;outline-offset:-3px;animation:pressPulse 1.2s ease-in-out}
+@keyframes pressPulse{0%,100%{outline-color:rgba(212,175,55,0.4)}50%{outline-color:rgba(212,175,55,1)}}
+/* 微信内引导气泡 */
+.wechat-guide{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:#fff;padding:14px 18px;border-radius:10px;font-size:14px;line-height:1.6;text-align:center;max-width:80%;pointer-events:none;opacity:0;transition:opacity 0.3s;z-index:2}
+.wechat-guide.show{opacity:1}
 @keyframes flyDown{0%{opacity:1;transform:translateY(0) scale(1.1) rotate(-5deg)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(260px) scale(0.3) rotate(15deg)}}
 .float-score{position:absolute;z-index:15;pointer-events:none;color:#d4af37;font-weight:700;font-size:15px;
   animation:floatUp .7s ease-out forwards;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
@@ -452,9 +461,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 <div id="poster-modal" class="poster-modal" style="display:none">
   <div class="poster-mask"></div>
   <div class="poster-content">
-    <div class="poster-hint">📱 长按图片保存到相册，分享到朋友圈<br>💻 电脑端可右键"图片另存为"</div>
-    <div class="poster-wrap">
+    <div class="poster-hint">📱 <b>长按图片</b>，选择「保存到手机/相册」即可分享到朋友圈<br>💻 电脑端可点击下方「下载海报」按钮</div>
+    <div class="poster-wrap" id="poster-wrap">
       <canvas id="poster-canvas" width="750" height="1100"></canvas>
+      <div class="wechat-guide" id="wechat-guide">✋ 长按图片<br>选择「保存到相册」</div>
     </div>
     <div class="poster-actions">
       <button class="btn-download" id="btn-download">⬇️ 下载海报</button>
@@ -796,11 +806,100 @@ const Game = {
     const modal = document.getElementById('poster-modal');
     modal.style.display = 'flex';
     this.drawPoster();
+    this.setupPosterLongPress();
     if(window._hmt) _hmt.push(['_trackEvent','poster','open']);
   },
 
   closePoster(){
     document.getElementById('poster-modal').style.display = 'none';
+    this.cleanupPosterLongPress();
+  },
+
+  // 长按海报：让微信/iOS Safari 弹出"保存图片"原生菜单
+  setupPosterLongPress(){
+    const wrap = document.getElementById('poster-wrap');
+    const canvas = document.getElementById('poster-canvas');
+    const guide = document.getElementById('wechat-guide');
+    if(!wrap || !canvas) return;
+
+    // 微信内（或其他无法直接下载的容器）显示引导气泡
+    const inWechat = /MicroMessenger/i.test(navigator.userAgent);
+    if(inWechat){
+      guide.classList.add('show');
+      setTimeout(()=>guide.classList.remove('show'), 3500);
+    }
+
+    let pressTimer = null;
+    let pressed = false;
+
+    const startPress = (e)=>{
+      // 阻止默认行为（避免触发系统选择）
+      if(e.cancelable) e.preventDefault();
+      pressed = false;
+      pressTimer = setTimeout(()=>{
+        pressed = true;
+        wrap.classList.add('pressing');
+        // 触发长按：用 touch 事件触发（iOS 微信）
+        if(inWechat){
+          guide.textContent = '✋ 松开后点击「保存到相册」';
+          guide.classList.add('show');
+        }
+      }, 400);
+    };
+
+    const endPress = (e)=>{
+      clearTimeout(pressTimer);
+      if(pressed){
+        // 长按结束：把 canvas 转成图片插入 DOM（关键！）
+        // canvas 的 long-press 在 iOS 不会触发保存菜单，必须用 <img>
+        const img = this.canvasToImage(canvas);
+        canvas.style.display = 'none';
+        wrap.appendChild(img);
+        if(window._hmt) _hmt.push(['_trackEvent','poster','longpress']);
+        if(inWechat){
+          guide.textContent = '✅ 长按上方图片 → 选「保存到相册」';
+          setTimeout(()=>guide.classList.remove('show'), 4000);
+        }
+      }
+      wrap.classList.remove('pressing');
+    };
+
+    const cancelPress = ()=>{
+      clearTimeout(pressTimer);
+      wrap.classList.remove('pressing');
+    };
+
+    // 用 canvas 的 pointer 事件
+    canvas.addEventListener('touchstart', startPress, {passive:false});
+    canvas.addEventListener('touchend', endPress);
+    canvas.addEventListener('touchcancel', cancelPress);
+    canvas.addEventListener('mousedown', startPress);
+    canvas.addEventListener('mouseup', endPress);
+    canvas.addEventListener('mouseleave', cancelPress);
+  },
+
+  cleanupPosterLongPress(){
+    // 恢复 canvas 显示（如果之前被 img 替换过）
+    const canvas = document.getElementById('poster-canvas');
+    const wrap = document.getElementById('poster-wrap');
+    if(!canvas || !wrap) return;
+    canvas.style.display = 'block';
+    const oldImg = wrap.querySelector('img.poster-img');
+    if(oldImg) oldImg.remove();
+    const guide = document.getElementById('wechat-guide');
+    if(guide) guide.classList.remove('show');
+  },
+
+  // canvas → <img>，长按图片能触发原生保存菜单
+  canvasToImage(canvas){
+    let img = canvas.parentElement.querySelector('img.poster-img');
+    if(!img){
+      img = document.createElement('img');
+      img.className = 'poster-img';
+      img.style.cssText = 'display:block;width:auto;height:auto;max-width:88vw;max-height:68vh;object-fit:contain';
+      img.src = canvas.toDataURL('image/png');
+    }
+    return img;
   },
 
   drawPoster(){
@@ -1001,13 +1100,19 @@ function drawCorner(ctx, x, y, size){
   ctx.restore();
 }
 
-// 海报下载
+// 海报下载（仅 PC 端触发，移动端按钮已通过 CSS 隐藏）
 function downloadPoster(){
   const canvas = document.getElementById('poster-canvas');
-  const link = document.createElement('a');
-  link.download = '端午文化探险-成绩海报.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  // PC 上：<a download> 走浏览器下载，微信里如果还触发，给个友好提示
+  try {
+    const link = document.createElement('a');
+    link.download = '端午文化探险-成绩海报.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    // 微信拦截下载
+    alert('微信内不支持直接下载。\n请长按图片保存到相册后再分享。');
+  }
   if(window._hmt) _hmt.push(['_trackEvent','poster','download']);
 }
 
