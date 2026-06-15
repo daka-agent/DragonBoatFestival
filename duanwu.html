@@ -31,6 +31,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 /* === 页面容器 === */
 .page{display:none;position:absolute;inset:0;z-index:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
 .page.active{display:flex}
+/* 通关页特殊：内容多，允许页面级滚动（解决微信端排行榜被截断的问题） */
+#end-page.active{justify-content:flex-start;padding-top:24px;padding-bottom:24px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#end-page.active .game-card{margin:0 auto 20px}
 
 /* === 标题页 === */
 #title-page h1{font-size:clamp(28px,7vw,48px);color:#8b0000;font-weight:900;letter-spacing:0.15em;margin-bottom:12px;
@@ -314,6 +317,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .lb-table tr.hl td{background:rgba(29,158,117,0.08);font-weight:600;color:#0F6E56}
 .lb-empty{color:#999;padding:16px;font-size:13px}
 .lb-sync{font-size:11px;color:#999;margin-top:6px;text-align:right}
+.lb-scroll-hint{font-size:11px;color:#999;font-weight:400;margin-left:8px;letter-spacing:0}
+/* 排行榜滚动容器（解决微信端内容溢出看不到的问题） */
+.lb-scroll{width:100%;max-height:42vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;border-radius:6px;border:1px solid rgba(196,30,58,0.12);background:rgba(255,250,240,0.5)}
+.lb-scroll::-webkit-scrollbar{width:4px}
+.lb-scroll::-webkit-scrollbar-thumb{background:rgba(196,30,58,0.4);border-radius:2px}
+.lb-scroll .lb-table{width:100%}
 
 /* 粒子 */
 .particle{position:fixed;pointer-events:none;z-index:100;border-radius:50%;animation:ptclFade .9s ease-out forwards}
@@ -450,8 +459,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
     <button class="btn-leader" id="btn-leader">查看排行榜</button>
 
     <div class="lb-section" id="lb-section">
-      <div class="lb-title">—— 文化榜 ——<span class="lb-cloud-tag">☁️ 云端</span></div>
-      <table class="lb-table"><thead><tr><th>排名</th><th>名字</th><th>总分</th></tr></thead><tbody id="lb-body"></tbody></table>
+      <div class="lb-title">—— 文化榜 ——<span class="lb-cloud-tag">☁️ 云端</span><span class="lb-scroll-hint">（可上下滑动）</span></div>
+      <div class="lb-scroll">
+        <table class="lb-table"><thead><tr><th>排名</th><th>名字</th><th>总分</th></tr></thead><tbody id="lb-body"></tbody></table>
+      </div>
       <div class="lb-sync" id="lb-sync"></div>
     </div>
   </div>
