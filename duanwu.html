@@ -32,8 +32,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .page{display:none;position:absolute;inset:0;z-index:1;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
 .page.active{display:flex}
 /* 通关页特殊：内容多，允许页面级滚动（解决微信端排行榜被截断的问题） */
-#end-page.active{justify-content:flex-start;padding-top:24px;padding-bottom:24px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-#end-page.active .game-card{margin:0 auto 20px}
+#end-page.active{justify-content:flex-start;padding-top:24px;padding-bottom:32px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:100vh}
+#end-page.active .game-card{margin:0 auto 20px;overflow:visible}
+#end-page.active .lb-scroll{max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 /* === 标题页 === */
 #title-page h1{font-size:clamp(28px,7vw,48px);color:#8b0000;font-weight:900;letter-spacing:0.15em;margin-bottom:12px;
@@ -319,7 +320,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .lb-sync{font-size:11px;color:#999;margin-top:6px;text-align:right}
 .lb-scroll-hint{font-size:11px;color:#999;font-weight:400;margin-left:8px;letter-spacing:0}
 /* 排行榜滚动容器（解决微信端内容溢出看不到的问题） */
-.lb-scroll{width:100%;max-height:42vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;border-radius:6px;border:1px solid rgba(196,30,58,0.12);background:rgba(255,250,240,0.5)}
+.lb-scroll{width:100%;max-height:55vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;border-radius:6px;border:1px solid rgba(196,30,58,0.12);background:rgba(255,250,240,0.5)}
 .lb-scroll::-webkit-scrollbar{width:4px}
 .lb-scroll::-webkit-scrollbar-thumb{background:rgba(196,30,58,0.4);border-radius:2px}
 .lb-scroll .lb-table{width:100%}
@@ -678,6 +679,14 @@ const Game = {
   },
 
   goTo(pageId, cb){
+    // 通关页需要页面级滚动，其他页禁滚（防止游戏过程滚动）
+    if(pageId === 'end-page'){
+      document.body.style.overflow = 'auto';
+      document.body.style.height = 'auto';
+    } else {
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100vh';
+    }
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     const page = document.getElementById(pageId);
     page.classList.add('active');
