@@ -221,6 +221,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .trail-dot{position:absolute;width:8px;height:8px;border-radius:50%;z-index:24;pointer-events:none;
   background:radial-gradient(circle,rgba(212,175,55,0.7),transparent);animation:trailFade .35s ease-out forwards}
 @keyframes trailFade{0%{opacity:0.8;transform:scale(1)}100%{opacity:0;transform:scale(0)}}
+
+/* === 分享按钮 === */
+.btn-share{display:block;width:100%;padding:11px;margin:10px 0 0;border:none;border-radius:22px;
+  font-size:14px;font-weight:600;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#1d9e75,#5dcaa5);box-shadow:0 3px 10px rgba(29,158,117,0.3);
+  transition:transform .15s}
+.btn-share:active{transform:scale(0.97)}
+
+/* === 海报弹层 === */
+.poster-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center}
+.poster-mask{position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)}
+.poster-content{position:relative;max-width:92vw;max-height:92vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px;z-index:1}
+.poster-hint{color:rgba(255,255,255,0.85);font-size:13px;text-align:center;line-height:1.6}
+.poster-wrap{background:#fff;padding:0;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.4);max-height:70vh;overflow:hidden}
+#poster-canvas{display:block;width:auto;height:auto;max-width:88vw;max-height:68vh;object-fit:contain}
+.poster-actions{display:flex;gap:10px;width:100%;max-width:300px}
+.btn-download,.btn-close{flex:1;padding:10px;border:none;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer}
+.btn-download{background:linear-gradient(135deg,#c41e3a,#8b0000);color:#fff}
+.btn-close{background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3)}
 @keyframes flyDown{0%{opacity:1;transform:translateY(0) scale(1.1) rotate(-5deg)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(260px) scale(0.3) rotate(15deg)}}
 .float-score{position:absolute;z-index:15;pointer-events:none;color:#d4af37;font-weight:700;font-size:15px;
   animation:floatUp .7s ease-out forwards;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
@@ -418,12 +437,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
       <button class="btn-submit" id="btn-submit">提交成绩</button>
       <button class="btn-restart" id="btn-restart">再玩一次</button>
     </div>
+    <button class="btn-share" id="btn-share">📤 生成分享海报</button>
     <button class="btn-leader" id="btn-leader">查看排行榜</button>
 
     <div class="lb-section" id="lb-section">
       <div class="lb-title">—— 文化榜 ——<span class="lb-cloud-tag">☁️ 云端</span></div>
       <table class="lb-table"><thead><tr><th>排名</th><th>名字</th><th>总分</th></tr></thead><tbody id="lb-body"></tbody></table>
       <div class="lb-sync" id="lb-sync"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 分享海报弹层 ========== -->
+<div id="poster-modal" class="poster-modal" style="display:none">
+  <div class="poster-mask"></div>
+  <div class="poster-content">
+    <div class="poster-hint">📱 长按图片保存到相册，分享到朋友圈<br>💻 电脑端可右键"图片另存为"</div>
+    <div class="poster-wrap">
+      <canvas id="poster-canvas" width="750" height="1100"></canvas>
+    </div>
+    <div class="poster-actions">
+      <button class="btn-download" id="btn-download">⬇️ 下载海报</button>
+      <button class="btn-close" id="btn-close-poster">关闭</button>
     </div>
   </div>
 </div>
@@ -596,6 +631,11 @@ const Game = {
     document.getElementById('btn-restart').onclick = ()=>this.restart();
     document.getElementById('btn-leader').onclick = ()=>this.showLB();
 
+    // 海报相关
+    document.getElementById('btn-share').onclick = ()=>this.openPoster();
+    document.getElementById('btn-close-poster').onclick = ()=>this.closePoster();
+    document.getElementById('btn-download').onclick = ()=>downloadPoster();
+
     // 键盘
     document.addEventListener('keydown', e=>{
       if(e.code==='Space'||e.code==='Enter'){
@@ -749,8 +789,227 @@ const Game = {
       document.body.appendChild(el);
       setTimeout(()=>el.remove(), 1000);
     }
+  },
+
+  // --- 分享海报 ---
+  openPoster(){
+    const modal = document.getElementById('poster-modal');
+    modal.style.display = 'flex';
+    this.drawPoster();
+    if(window._hmt) _hmt.push(['_trackEvent','poster','open']);
+  },
+
+  closePoster(){
+    document.getElementById('poster-modal').style.display = 'none';
+  },
+
+  drawPoster(){
+    const canvas = document.getElementById('poster-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = 750, H = 1100;
+    ctx.clearRect(0,0,W,H);
+
+    // 1) 米色宣纸背景
+    const bg = ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,'#f5ebd6');
+    bg.addColorStop(1,'#e8d9b8');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    // 2) 顶部朱砂红条
+    ctx.fillStyle = '#c41e3a';
+    ctx.fillRect(0,0,W,180);
+
+    // 顶部装饰纹理（龙鳞）
+    ctx.fillStyle = 'rgba(255,215,0,0.15)';
+    for(let i=0;i<W;i+=40){
+      ctx.beginPath();
+      ctx.arc(i, 30, 18, 0, Math.PI*2);
+      ctx.fill();
+    }
+    for(let i=20;i<W;i+=40){
+      ctx.beginPath();
+      ctx.arc(i, 70, 18, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // 3) 标题
+    ctx.fillStyle = '#fff8dc';
+    ctx.font = 'bold 56px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('端午文化探险', W/2, 95);
+
+    ctx.font = '24px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = 'rgba(255,248,220,0.85)';
+    ctx.fillText('— 龙舟·楚辞·粽香 —', W/2, 138);
+
+    // 4) 金色徽章框（分数）
+    const cx = W/2, cy = 350;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 140, 0, Math.PI*2);
+    ctx.fillStyle = '#d4af37';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#8b6914';
+    ctx.stroke();
+
+    // 内圈
+    ctx.beginPath();
+    ctx.arc(cx, cy, 122, 0, Math.PI*2);
+    ctx.fillStyle = '#fff8dc';
+    ctx.fill();
+
+    // 5) 分数数字
+    const total = this.total();
+    const scoreText = String(total);
+    ctx.fillStyle = '#c41e3a';
+    ctx.font = 'bold 130px "Microsoft YaHei", sans-serif';
+    ctx.fillText(scoreText, cx, cy+18);
+
+    ctx.font = 'bold 28px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#8b0000';
+    ctx.fillText('总分', cx, cy+72);
+
+    // 6) 评级（按分数段）
+    let level = '初学者';
+    if(total>=100) level = '传承宗师';
+    else if(total>=80) level = '文化达人';
+    else if(total>=60) level = '端午学士';
+    else if(total>=40) level = '文化新秀';
+    ctx.font = 'bold 36px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#8b0000';
+    ctx.fillText('· '+level+' ·', cx, cy+200);
+
+    // 7) 玩家名
+    const playerName = (document.getElementById('player-name').value.trim()) || '匿名侠';
+    ctx.font = 'bold 32px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#3d3018';
+    ctx.fillText('玩家：'+playerName, cx, 580);
+
+    ctx.font = '20px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#8b6914';
+    const date = new Date();
+    ctx.fillText(date.getFullYear()+'年端午节 · 通关纪念', cx, 612);
+
+    // 8) 文化碎片（彩蛋）
+    const frags = FRAGS.slice(0, 6);
+    ctx.font = '18px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#8b0000';
+    ctx.fillText('— 我收集的文化碎片 —', cx, 670);
+
+    // 碎片标签云
+    const fragY = 720;
+    const startX = 75;
+    ctx.font = '16px "Microsoft YaHei", sans-serif';
+    frags.forEach((f, i)=>{
+      const w = ctx.measureText(f).width + 30;
+      const x = startX + (i % 3) * 220;
+      const y = fragY + Math.floor(i/3) * 50;
+      // 圆角背景
+      ctx.fillStyle = 'rgba(196,30,58,0.1)';
+      roundRect(ctx, x, y-22, w, 32, 16);
+      ctx.fill();
+      // 描边
+      ctx.strokeStyle = 'rgba(196,30,58,0.4)';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, x, y-22, w, 32, 16);
+      ctx.stroke();
+      // 文字
+      ctx.fillStyle = '#8b0000';
+      ctx.fillText(f, x+15, y);
+    });
+
+    // 9) 屈原寄语（取首句）
+    const fullMsg = quyuanMsg(total);
+    const firstLine = fullMsg.split('\n')[0];
+    ctx.font = 'italic 22px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#5d4220';
+    ctx.fillText('「'+firstLine+'」', cx, 860);
+
+    // 10) 装饰线
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(150, 900);
+    ctx.lineTo(W-150, 900);
+    ctx.stroke();
+
+    // 11) 底部信息
+    ctx.font = '20px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#8b0000';
+    ctx.fillText('扫码挑战端午文化', cx, 950);
+
+    ctx.font = '16px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#8b6914';
+    ctx.fillText('23物流2班 · 端午文化探险', cx, 985);
+
+    // 二维码占位（用文字框代替）
+    const qrSize = 80;
+    const qrX = (W - qrSize)/2;
+    const qrY = 1000;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(qrX-5, qrY-5, qrSize+10, qrSize+10);
+    ctx.fillStyle = '#3d3018';
+    // 简易二维码占位（实际可替换为真实二维码图）
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('URL', qrX+qrSize/2, qrY+qrSize/2+4);
+
+    // 12) 装饰角花
+    drawCorner(ctx, 0, 0, 80);
+    drawCorner(ctx, W, 0, 80);
+    drawCorner(ctx, 0, H, 80);
+    drawCorner(ctx, W, H, 80);
   }
 };
+
+// 工具函数：圆角矩形
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
+
+// 工具函数：角花装饰
+function drawCorner(ctx, x, y, size){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = 'rgba(212,175,55,0.6)';
+  if(x===0 && y===0) {} // 左上
+  else if(x>0 && y===0) { ctx.scale(-1,1); } // 右上
+  else if(x===0 && y>0) { ctx.scale(1,-1); } // 左下
+  else { ctx.scale(-1,-1); } // 右下
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(size, 0);
+  ctx.lineTo(0, size);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(20, 20, 8, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// 海报下载
+function downloadPoster(){
+  const canvas = document.getElementById('poster-canvas');
+  const link = document.createElement('a');
+  link.download = '端午文化探险-成绩海报.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  if(window._hmt) _hmt.push(['_trackEvent','poster','download']);
+}
 
 // ===================================================================
 //  第一关：击鼓
